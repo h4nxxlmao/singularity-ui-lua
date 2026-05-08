@@ -1,4 +1,4 @@
-local Singularity = loadstring(game:HttpGet("https://raw.githubusercontent.com/your-username/singularity-ui-lua/main/src/SingularityUI.lua"))()
+local Singularity = loadstring(game:HttpGet("https://github.com/h4nxxlmao/singularity-ui-lua/blob/main/src/SingularityUI.lua"))()
 
 local Window = Singularity:CreateWindow({
     Title = "Singularity",
