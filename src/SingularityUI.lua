@@ -17,6 +17,7 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
+local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
 local DEFAULT_TWEEN = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
@@ -48,8 +49,8 @@ Singularity.Themes = {
         Accent = Color3.fromRGB(245, 245, 245),
         AccentDark = Color3.fromRGB(32, 32, 32),
         Text = Color3.fromRGB(248, 248, 248),
-        Subtext = Color3.fromRGB(172, 172, 172),
-        Muted = Color3.fromRGB(105, 105, 105),
+        Subtext = Color3.fromRGB(205, 205, 205),
+        Muted = Color3.fromRGB(145, 145, 145),
         Success = Color3.fromRGB(235, 235, 235),
         Warning = Color3.fromRGB(210, 210, 210),
         Danger = Color3.fromRGB(245, 245, 245)
@@ -367,6 +368,16 @@ local function getLucideIcons()
     return LucideIcons
 end
 
+local function assetImage(id)
+    local text = tostring(id)
+
+    if text:find("rbxassetid://") == 1 or text:find("rbxthumb://") == 1 or text:find("http://") == 1 or text:find("https://") == 1 then
+        return text
+    end
+
+    return "rbxassetid://" .. text
+end
+
 local function makeLucideImage(parent, icon, theme, size)
     local icons = getLucideIcons()
 
@@ -580,7 +591,7 @@ local function makeIcon(parent, icon, theme, size)
         or iconString:find("https://") == 1 then
         return create("ImageLabel", {
             BackgroundTransparency = 1,
-            Image = typeof(icon) == "number" and ("rbxassetid://" .. tostring(icon)) or iconString,
+            Image = assetImage(icon),
             ImageColor3 = theme.Text,
             Size = UDim2.fromOffset(size, size),
             Parent = parent
@@ -694,6 +705,7 @@ function Singularity:Notify(options)
 
     task.delay(duration, function()
         if frame and frame.Parent then
+            tween(progress, { BackgroundTransparency = 1 }, DEFAULT_TWEEN)
             local closeTween = tween(frame, {
                 BackgroundTransparency = 1,
                 Position = UDim2.fromOffset(16, -6),
@@ -748,6 +760,16 @@ function Window:_build()
     local sidebarWidth = options.SidebarWidth or 230
     local scale = options.Scale or 0.94
 
+    local blur = nil
+
+    if options.Acrylic ~= false then
+        blur = create("BlurEffect", {
+            Name = "SingularityAcrylic",
+            Size = 0,
+            Parent = Lighting
+        })
+    end
+
     local screenGui = create("ScreenGui", {
         Name = options.Name or "SingularityUI",
         IgnoreGuiInset = true,
@@ -767,6 +789,10 @@ function Window:_build()
     })
     addCorner(main, 10)
     addStroke(main, theme.Stroke, 0.15)
+
+    if options.Acrylic ~= false then
+        main.BackgroundTransparency = 0.08
+    end
 
     local uiScale = create("UIScale", {
         Scale = scale,
@@ -806,12 +832,17 @@ function Window:_build()
     addCorner(logo, 11)
     addStroke(logo, theme.Stroke, 0.72)
 
-    local logoImage = makeIcon(logo, options.Logo or 77666858594516, theme, 30)
+    local logoId = options.Logo or 77666858594516
+    local logoImage = create("ImageLabel", {
+        BackgroundTransparency = 1,
+        Image = assetImage(logoId),
+        ImageColor3 = Color3.new(1, 1, 1),
+        ScaleType = Enum.ScaleType.Fit,
+        Size = UDim2.fromOffset(32, 32),
+        Parent = logo
+    })
     logoImage.AnchorPoint = Vector2.new(0.5, 0.5)
     logoImage.Position = UDim2.fromScale(0.5, 0.5)
-    if logoImage:IsA("ImageLabel") or logoImage:IsA("ImageButton") then
-        logoImage.ImageColor3 = Color3.new(1, 1, 1)
-    end
 
     local title = makeText(brandCard, options.Title or "Singularity", 15, theme.Text, Enum.Font.GothamMedium, {
         Position = UDim2.fromOffset(78, 20),
@@ -1027,6 +1058,7 @@ function Window:_build()
     minimizedTitle.Visible = false
 
     self.ScreenGui = screenGui
+    self.Blur = blur
     self.Main = main
     self.UIScale = uiScale
     self.Topbar = dragHeader
@@ -1076,9 +1108,13 @@ function Window:_build()
 
     mountGui(screenGui)
     tween(main, {
-        BackgroundTransparency = 0,
+        BackgroundTransparency = options.Acrylic ~= false and 0.08 or 0,
         Size = size
     }, SLOW_TWEEN)
+
+    if blur then
+        tween(blur, { Size = options.BlurSize or 14 }, SLOW_TWEEN)
+    end
 end
 function Window:_topButton(parent, text, textColor)
     local button = create("TextButton", {
@@ -1284,6 +1320,10 @@ function Window:Destroy()
     if self.ScreenGui then
         self.ScreenGui:Destroy()
     end
+
+    if self.Blur then
+        self.Blur:Destroy()
+    end
 end
 
 function Window:Notify(options)
@@ -1327,6 +1367,7 @@ Window.CreateTab = Window.Tab
 
 function Window:_selectTab(targetTab)
     self.ActiveTab = targetTab
+    targetTab.Page.CanvasPosition = Vector2.new(0, 0)
 
     if self.PageTitle then
         self.PageTitle.Text = targetTab.Title
@@ -1366,7 +1407,18 @@ function Window:_renderSegments(tab)
     end
 
     self.SegmentHolder.Visible = true
-    tab.ActiveSegment = tab.ActiveSegment or optionTitle(segments[1])
+    local hasActiveSegment = false
+
+    for _, segment in ipairs(segments) do
+        if optionTitle(segment) == tab.ActiveSegment then
+            hasActiveSegment = true
+            break
+        end
+    end
+
+    if not hasActiveSegment then
+        tab.ActiveSegment = optionTitle(segments[1])
+    end
 
         for index, segment in ipairs(segments) do
         local label = optionTitle(segment)
@@ -1406,7 +1458,7 @@ function Window:_filterControls(controls, query, segment)
 
     for _, control in ipairs(controls or {}) do
         local matchesSearch = query == "" or string.find(control.SearchText or "", query, 1, true) ~= nil
-        local matchesSegment = not control.Segment or not segment or control.Segment == segment
+        local matchesSegment = not segment or control.Segment == nil or control.Segment == segment
         local visible = matchesSearch and matchesSegment
 
         if control.ChildrenControls then
@@ -1432,6 +1484,7 @@ function Window:_applySearch(query)
     end
 
     self:_filterControls(self.ActiveTab.Controls, query, self.ActiveTab.ActiveSegment)
+    self.ActiveTab.Page.CanvasPosition = Vector2.new(0, 0)
 end
 
 function Tab:_build()
@@ -1512,7 +1565,11 @@ end
 
 function Tab:_refreshSearch()
     if self.Window and self.Window.ActiveTab then
-        self.Window:_applySearch(self.Window.SearchInput and self.Window.SearchInput.Text or "")
+        if self.ParentTab then
+            self.ParentTab:_refreshSearch()
+        else
+            self.Window:_applySearch(self.Window.SearchInput and self.Window.SearchInput.Text or "")
+        end
     end
 end
 
@@ -1558,7 +1615,7 @@ function Tab:_base(options, height)
         Desc = desc,
         Options = options,
         SearchText = searchableText(options),
-        Segment = options.Segment or self.ActiveSegment
+        Segment = options.Segment or self.Segment or self.ActiveSegment
     }, Control)
 
     table.insert(self.Controls, control)
@@ -1571,6 +1628,7 @@ function Tab:Group(options)
 
     local theme = self.Window.Theme
     local height = options.Height or 310
+    local segment = options.Segment or self.Segment or self.ActiveSegment
     local frame = create("Frame", {
         BackgroundColor3 = theme.Window,
         BorderSizePixel = 0,
@@ -1612,7 +1670,7 @@ function Tab:Group(options)
         IsGroup = true,
         Frame = frame,
         SearchText = searchableText(options, "Group"),
-        Segment = options.Segment or self.ActiveSegment
+        Segment = segment
     }, {
         __index = Tab
     })
@@ -1620,7 +1678,7 @@ function Tab:Group(options)
     table.insert(self.Controls, {
         Frame = frame,
         SearchText = group.SearchText,
-        Segment = group.Segment,
+        Segment = segment,
         ChildrenControls = group.Controls
     })
 
@@ -1639,7 +1697,7 @@ function Tab:Section(title)
     table.insert(self.Controls, {
         Frame = label,
         SearchText = string.lower(tostring(title or "Section")),
-        Segment = self.ActiveSegment
+        Segment = self.Segment or self.ActiveSegment
     })
 
     self:_refreshSearch()
@@ -1710,7 +1768,7 @@ function Tab:Button(options)
             Button = button,
             Options = options,
             SearchText = searchableText(options),
-            Segment = options.Segment or self.ActiveSegment
+            Segment = options.Segment or self.Segment or self.ActiveSegment
         }, Control)
 
         table.insert(self.Controls, control)
@@ -1988,7 +2046,7 @@ function Tab:Input(options)
             Value = value,
             Options = options,
             SearchText = searchableText(options),
-            Segment = options.Segment or self.ActiveSegment
+            Segment = options.Segment or self.Segment or self.ActiveSegment
         }, Control)
 
         local function apply(nextValue, silent)
@@ -2152,7 +2210,7 @@ function Tab:Dropdown(options)
         Size = UDim2.new(1, -34, 1, 0)
     })
 
-    local chevron = makeText(selectButton, "v", 12, theme.Subtext, Enum.Font.GothamBold, {
+    local chevron = makeText(selectButton, "+", 12, theme.Subtext, Enum.Font.GothamBold, {
         AnchorPoint = Vector2.new(1, 0.5),
         Position = UDim2.new(1, -10, 0.5, 0),
         Size = UDim2.fromOffset(14, 14),
@@ -2236,7 +2294,7 @@ function Tab:Dropdown(options)
     local function setExpanded(nextExpanded)
         expanded = nextExpanded
         list.Visible = expanded
-        chevron.Text = expanded and "^" or "v"
+        chevron.Text = expanded and "-" or "+"
 
         tween(frame, {
             Size = UDim2.new(1, 0, 0, expanded and expandedHeight or collapsedHeight)

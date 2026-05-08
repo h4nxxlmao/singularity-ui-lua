@@ -8,14 +8,14 @@ local function loadSingularity()
         return require(module)
     end
 
-    assert(SOURCE_URL ~= "", "Put SingularityUI.lua in ReplicatedStorage as a ModuleScript named SingularityUI, or set SOURCE_URL to a raw hosted URL.")
-    assert(loadstring, "loadstring is not available in this environment. Use the ModuleScript require setup instead.")
+    assert(SOURCE_URL ~= "", "set SOURCE_URL to a raw hosted URL.")
+    assert(loadstring, "loadstring is not available in this environment.")
 
     local ok, source = pcall(function()
         return game:HttpGet(SOURCE_URL)
     end)
 
-    assert(ok and type(source) == "string" and source ~= "", "Failed to download SingularityUI.lua from SOURCE_URL.")
+    assert(ok and type(source) == "string" and source ~= "", "Failed to get SingularityUI.lua from SOURCE_URL.")
 
     local chunk, compileError = loadstring(source)
     assert(chunk, "Downloaded source did not compile. Check SOURCE_URL. Error: " .. tostring(compileError))
@@ -28,11 +28,13 @@ Singularity.UseLucide = true
 
 local Window = Singularity:CreateWindow({
     Title = "Singularity",
-    Subtitle = "Singularity - Dark",
+    Subtitle = "v0.0.1",
     Theme = "Singularity",
     Logo = 77666858594516,
     NavigationTitle = "Combat",
     SearchPlaceholder = "Search modules",
+    Acrylic = true,
+    BlurSize = 14,
     Profile = {
         Enabled = true
     },

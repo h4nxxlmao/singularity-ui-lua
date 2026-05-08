@@ -21,6 +21,8 @@ local Window = Singularity:CreateWindow({
     Profile = {
         Enabled = true
     },
+    Acrylic = true,
+    BlurSize = 14,
     Size = UDim2.fromOffset(760, 480),
     Scale = 0.94,
     ToggleKey = Enum.KeyCode.RightShift
