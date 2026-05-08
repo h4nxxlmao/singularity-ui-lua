@@ -11,6 +11,7 @@ Singularity.__index = Singularity
 
 Singularity.Name = "Singularity UI"
 Singularity.Version = "0.2.0"
+Singularity.UseLucide = true
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -30,6 +31,10 @@ Tab.__index = Tab
 
 local Control = {}
 Control.__index = Control
+
+local LUCIDE_LOADER_URL = "https://raw.githubusercontent.com/Footagesus/Icons/main/Main-v2.lua"
+local LucideIcons = nil
+local LucideTried = false
 
 Singularity.Themes = {
     Dark = {
@@ -96,9 +101,9 @@ local function press(button, normalSize)
 
     local pressedSize = UDim2.new(
         normalSize.X.Scale,
-        normalSize.X.Offset - 2,
+        math.max(0, normalSize.X.Offset - 2),
         normalSize.Y.Scale,
-        normalSize.Y.Offset - 2
+        math.max(0, normalSize.Y.Offset - 2)
     )
 
     tween(button, { Size = pressedSize }, PRESS_TWEEN)
@@ -268,16 +273,218 @@ local function formatKeyCode(keyCode)
     return tostring(keyCode or "None")
 end
 
-local IconGlyphs = {
-    aimbot = "A",
-    combat = "C",
-    home = "H",
-    page = "P",
-    settings = "S",
-    slider = "%",
-    toggle = "T",
-    weapon = "W"
-}
+local function fetchText(url)
+    if game.HttpGetAsync then
+        local ok, result = pcall(function()
+            return game:HttpGetAsync(url)
+        end)
+
+        if ok then
+            return result
+        end
+    end
+
+    if game.HttpGet then
+        local ok, result = pcall(function()
+            return game:HttpGet(url)
+        end)
+
+        if ok then
+            return result
+        end
+    end
+
+    return nil
+end
+
+local function getLucideIcons()
+    if not Singularity.UseLucide or LucideTried then
+        return LucideIcons
+    end
+
+    LucideTried = true
+
+    if not loadstring then
+        return nil
+    end
+
+    local source = fetchText(LUCIDE_LOADER_URL)
+
+    if not source then
+        return nil
+    end
+
+    local chunk = loadstring(source)
+
+    if not chunk then
+        return nil
+    end
+
+    local ok, icons = pcall(chunk)
+
+    if not ok or typeof(icons) ~= "table" then
+        return nil
+    end
+
+    pcall(function()
+        icons.SetIconsType("lucide")
+    end)
+
+    LucideIcons = icons
+    return LucideIcons
+end
+
+local function makeLucideImage(parent, icon, theme, size)
+    local icons = getLucideIcons()
+
+    if not icons then
+        return nil
+    end
+
+    local iconData = nil
+    local ok = pcall(function()
+        iconData = icons.Icon2(tostring(icon), "lucide")
+    end)
+
+    if not ok or not iconData then
+        return nil
+    end
+
+    local image = nil
+    local rectSize = nil
+    local rectOffset = nil
+
+    if typeof(iconData) == "string" then
+        image = iconData
+    elseif typeof(iconData) == "table" then
+        image = iconData[1]
+
+        if iconData[2] then
+            rectSize = iconData[2].ImageRectSize
+            rectOffset = iconData[2].ImageRectPosition
+        end
+    end
+
+    if not image then
+        return nil
+    end
+
+    local iconLabel = create("ImageLabel", {
+        BackgroundTransparency = 1,
+        Image = image,
+        ImageColor3 = theme.Text,
+        ImageRectSize = rectSize or Vector2.new(0, 0),
+        ImageRectOffset = rectOffset or Vector2.new(0, 0),
+        Size = UDim2.fromOffset(size, size),
+        Parent = parent
+    })
+
+    return iconLabel
+end
+
+local function line(parent, position, size, color, rotation)
+    local object = create("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = color,
+        BorderSizePixel = 0,
+        Position = position,
+        Rotation = rotation or 0,
+        Size = size,
+        Parent = parent
+    })
+    addCorner(object, 2)
+    return object
+end
+
+local function makeLucideIcon(parent, icon, theme, size)
+    icon = string.lower(tostring(icon))
+    size = size or 18
+
+    local holder = create("Frame", {
+        BackgroundTransparency = 1,
+        Size = UDim2.fromOffset(size, size),
+        Parent = parent
+    })
+
+    local color = theme.Text
+    local stroke = math.max(1, math.floor(size / 9))
+
+    if icon == "search" then
+        local circle = create("Frame", {
+            BackgroundTransparency = 1,
+            Position = UDim2.fromScale(0.18, 0.16),
+            Size = UDim2.fromScale(0.5, 0.5),
+            Parent = holder
+        })
+        addCorner(circle, size)
+        addStroke(circle, color, 0, stroke)
+        line(holder, UDim2.fromScale(0.72, 0.72), UDim2.fromScale(0.36, 0.1), color, 45)
+    elseif icon == "settings" then
+        local circle = create("Frame", {
+            BackgroundTransparency = 1,
+            Position = UDim2.fromScale(0.29, 0.29),
+            Size = UDim2.fromScale(0.42, 0.42),
+            Parent = holder
+        })
+        addCorner(circle, size)
+        addStroke(circle, color, 0, stroke)
+        for index = 0, 5 do
+            line(holder, UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.1, 0.86), color, index * 30)
+        end
+    elseif icon == "page" or icon == "file" then
+        local box = create("Frame", {
+            BackgroundTransparency = 1,
+            Position = UDim2.fromScale(0.24, 0.14),
+            Size = UDim2.fromScale(0.52, 0.72),
+            Parent = holder
+        })
+        addCorner(box, 3)
+        addStroke(box, color, 0, stroke)
+        line(holder, UDim2.fromScale(0.54, 0.36), UDim2.fromScale(0.26, 0.08), color, 0)
+        line(holder, UDim2.fromScale(0.5, 0.54), UDim2.fromScale(0.34, 0.08), color, 0)
+    elseif icon == "user" or icon == "profile" then
+        local head = create("Frame", {
+            BackgroundTransparency = 1,
+            Position = UDim2.fromScale(0.35, 0.18),
+            Size = UDim2.fromScale(0.3, 0.3),
+            Parent = holder
+        })
+        addCorner(head, size)
+        addStroke(head, color, 0, stroke)
+        local body = create("Frame", {
+            BackgroundTransparency = 1,
+            Position = UDim2.fromScale(0.23, 0.58),
+            Size = UDim2.fromScale(0.54, 0.24),
+            Parent = holder
+        })
+        addCorner(body, size)
+        addStroke(body, color, 0, stroke)
+    elseif icon == "aimbot" or icon == "crosshair" or icon == "combat" then
+        local circle = create("Frame", {
+            BackgroundTransparency = 1,
+            Position = UDim2.fromScale(0.24, 0.24),
+            Size = UDim2.fromScale(0.52, 0.52),
+            Parent = holder
+        })
+        addCorner(circle, size)
+        addStroke(circle, color, 0, stroke)
+        line(holder, UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.72, 0.08), color, 0)
+        line(holder, UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.08, 0.72), color, 0)
+    elseif icon == "weapon" then
+        line(holder, UDim2.fromScale(0.5, 0.48), UDim2.fromScale(0.72, 0.12), color, -25)
+        line(holder, UDim2.fromScale(0.36, 0.66), UDim2.fromScale(0.24, 0.1), color, 65)
+    elseif icon == "minus" then
+        line(holder, UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.55, 0.08), color, 0)
+    elseif icon == "x" or icon == "close" then
+        line(holder, UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.6, 0.08), color, 45)
+        line(holder, UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.6, 0.08), color, -45)
+    else
+        line(holder, UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.62, 0.08), color, 0)
+        line(holder, UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.08, 0.62), color, 0)
+    end
+
+    return holder
+end
 
 local function getSliderConfig(options)
     local packed = options.Value
@@ -341,19 +548,13 @@ local function makeIcon(parent, icon, theme, size)
         })
     end
 
-    local text = IconGlyphs[string.lower(tostring(icon))] or tostring(icon):sub(1, 2)
+    local lucideIcon = makeLucideImage(parent, icon, theme, size)
 
-    return create("TextLabel", {
-        BackgroundTransparency = 1,
-        Font = Enum.Font.GothamMedium,
-        Text = text,
-        TextColor3 = theme.Text,
-        TextSize = math.max(10, size - 9),
-        TextXAlignment = Enum.TextXAlignment.Center,
-        TextYAlignment = Enum.TextYAlignment.Center,
-        Size = UDim2.fromOffset(size, size),
-        Parent = parent
-    })
+    if lucideIcon then
+        return lucideIcon
+    end
+
+    return makeLucideIcon(parent, icon, theme, size)
 end
 
 function Singularity:SetTheme(theme)
@@ -522,10 +723,11 @@ function Window:_build()
     local main = create("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = theme.Window,
+        BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ClipsDescendants = true,
         Position = options.Position or UDim2.fromScale(0.5, 0.5),
-        Size = size,
+        Size = UDim2.new(size.X.Scale, math.max(0, size.X.Offset - 18), size.Y.Scale, math.max(0, size.Y.Offset - 18)),
         Parent = screenGui
     })
     addCorner(main, 10)
@@ -569,16 +771,9 @@ function Window:_build()
     addCorner(logo, 11)
     addStroke(logo, theme.Stroke, 0.72)
 
-    if options.Logo then
-        local logoImage = makeIcon(logo, options.Logo, theme, 26)
-        logoImage.AnchorPoint = Vector2.new(0.5, 0.5)
-        logoImage.Position = UDim2.fromScale(0.5, 0.5)
-    else
-        makeText(logo, tostring(options.LogoText or options.Title or "S"):sub(1, 1), 18, theme.Text, Enum.Font.GothamMedium, {
-            Size = UDim2.fromScale(1, 1),
-            TextXAlignment = Enum.TextXAlignment.Center
-        })
-    end
+    local logoImage = makeIcon(logo, options.Logo or 77666858594516, theme, 30)
+    logoImage.AnchorPoint = Vector2.new(0.5, 0.5)
+    logoImage.Position = UDim2.fromScale(0.5, 0.5)
 
     local title = makeText(brandCard, options.Title or "Singularity", 15, theme.Text, Enum.Font.GothamMedium, {
         Position = UDim2.fromOffset(78, 20),
@@ -615,20 +810,35 @@ function Window:_build()
         BackgroundColor3 = theme.Surface,
         BorderSizePixel = 0,
         Position = UDim2.new(0, 0, 1, 0),
-        Size = UDim2.new(1, 0, 0, 58),
+        Size = UDim2.new(1, 0, 0, 66),
         Parent = sidebar
     })
     addCorner(footer, 8)
     addStroke(footer, theme.Stroke, 0.58)
 
-    makeText(footer, options.FooterTitle or "Singularity - Dark", 12, theme.Subtext, Enum.Font.GothamMedium, {
-        Position = UDim2.fromOffset(14, 11),
-        Size = UDim2.new(1, -28, 0, 16)
+    local profile = options.Profile or {}
+    local avatar = create("Frame", {
+        BackgroundColor3 = theme.Input,
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(12, 13),
+        Size = UDim2.fromOffset(40, 40),
+        Parent = footer
+    })
+    addCorner(avatar, 10)
+    addStroke(avatar, theme.Stroke, 0.42)
+
+    local avatarIcon = makeIcon(avatar, profile.Avatar or "user", theme, 22)
+    avatarIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+    avatarIcon.Position = UDim2.fromScale(0.5, 0.5)
+
+    makeText(footer, profile.Name or options.FooterTitle or "User", 12, theme.Text, Enum.Font.GothamMedium, {
+        Position = UDim2.fromOffset(62, 14),
+        Size = UDim2.new(1, -78, 0, 18)
     })
 
-    makeText(footer, options.FooterText or "RightShift to toggle", 12, theme.Text, Enum.Font.Gotham, {
-        Position = UDim2.fromOffset(14, 31),
-        Size = UDim2.new(1, -28, 0, 16)
+    makeText(footer, profile.Role or options.FooterText or "Singularity - Dark", 11, theme.Subtext, Enum.Font.Gotham, {
+        Position = UDim2.fromOffset(62, 33),
+        Size = UDim2.new(1, -78, 0, 16)
     })
 
     local divider = create("Frame", {
@@ -685,6 +895,38 @@ function Window:_build()
         Parent = main
     })
 
+    local search = create("TextBox", {
+        AnchorPoint = Vector2.new(1, 0),
+        BackgroundColor3 = theme.Input,
+        BackgroundTransparency = 0.05,
+        BorderSizePixel = 0,
+        ClearTextOnFocus = false,
+        Font = Enum.Font.Gotham,
+        PlaceholderText = options.SearchPlaceholder or "Search",
+        PlaceholderColor3 = theme.Muted,
+        Position = UDim2.new(1, -82, 0, 14),
+        Size = UDim2.fromOffset(150, 24),
+        Text = "",
+        TextColor3 = theme.Text,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = main
+    })
+    addCorner(search, 7)
+    addStroke(search, theme.Stroke, 0.55)
+    addPadding(search, 28, 0, 10, 0)
+
+    local searchIcon = makeIcon(search, "search", theme, 14)
+    searchIcon.Position = UDim2.fromOffset(8, 5)
+
+    search.Focused:Connect(function()
+        tween(search, { BackgroundColor3 = theme.SurfaceHover, Size = UDim2.fromOffset(180, 24) }, DEFAULT_TWEEN)
+    end)
+
+    search.FocusLost:Connect(function()
+        tween(search, { BackgroundColor3 = theme.Input, Size = UDim2.fromOffset(150, 24) }, DEFAULT_TWEEN)
+    end)
+
     local actions = create("Frame", {
         AnchorPoint = Vector2.new(1, 0),
         BackgroundTransparency = 1,
@@ -701,14 +943,22 @@ function Window:_build()
         Parent = actions
     })
 
-    local minimize = self:_topButton(actions, "-", theme.Subtext)
+    local minimize = self:_topButton(actions, "minus", theme.Subtext)
     local close = self:_topButton(actions, "x", theme.Danger)
+
+    local minimizedTitle = makeText(main, options.Title or "Singularity", 14, theme.Text, Enum.Font.GothamMedium, {
+        Position = UDim2.fromOffset(18, 14),
+        Size = UDim2.new(1, -250, 0, 24)
+    })
+    minimizedTitle.Visible = false
 
     self.ScreenGui = screenGui
     self.Main = main
     self.UIScale = uiScale
     self.Topbar = dragHeader
     self.TitleLabel = title
+    self.MinimizedTitle = minimizedTitle
+    self.SearchBox = search
     self.PageTitle = pageTitle
     self.SegmentHolder = segmentHolder
     self.TopbarLine = divider
@@ -750,6 +1000,10 @@ function Window:_build()
     end
 
     mountGui(screenGui)
+    tween(main, {
+        BackgroundTransparency = 0,
+        Size = size
+    }, SLOW_TWEEN)
 end
 function Window:_topButton(parent, text, textColor)
     local button = create("TextButton", {
@@ -758,7 +1012,7 @@ function Window:_topButton(parent, text, textColor)
         BackgroundTransparency = 0.1,
         BorderSizePixel = 0,
         Font = Enum.Font.GothamBold,
-        Text = text,
+        Text = "",
         TextColor3 = textColor,
         TextSize = 12,
         Size = UDim2.fromOffset(24, 24),
@@ -767,6 +1021,10 @@ function Window:_topButton(parent, text, textColor)
 
     addCorner(button, 6)
     addStroke(button, self.Theme.Stroke, 0.55)
+
+    local icon = makeIcon(button, text, self.Theme, 14)
+    icon.AnchorPoint = Vector2.new(0.5, 0.5)
+    icon.Position = UDim2.fromScale(0.5, 0.5)
 
     button.MouseEnter:Connect(function()
         tween(button, { BackgroundColor3 = self.Theme.SurfaceHover }, DEFAULT_TWEEN)
@@ -925,10 +1183,12 @@ function Window:SetMinimized(value)
     self._minimized = value
     self.Sidebar.Visible = not value
     self.ContentShell.Visible = not value
+    self.TopbarLine.Visible = not value
+    self.SearchBox.Visible = not value
+    self.MinimizedTitle.Visible = value
     if self.ResizeHandle then
         self.ResizeHandle.Visible = not value
     end
-    self.MinimizeButton.Text = value and "+" or "-"
 
     if self.SizeConstraint then
         self.SizeConstraint.MinSize = value and Vector2.new(560, 54) or Vector2.new(560, 360)
