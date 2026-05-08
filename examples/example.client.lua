@@ -1,16 +1,46 @@
-local Singularity = loadstring(game:HttpGet("https://raw.githubusercontent.com/h4nxxlmao/singularity-ui-lua/refs/heads/main/src/SingularityUI.lua"))()
+local SOURCE_URL = "" -- Optional: paste your raw SingularityUI.lua URL here.
+
+local function loadSingularity()
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local module = ReplicatedStorage:FindFirstChild("SingularityUI")
+
+    if module and module:IsA("ModuleScript") then
+        return require(module)
+    end
+
+    assert(SOURCE_URL ~= "", "Put SingularityUI.lua in ReplicatedStorage as a ModuleScript named SingularityUI, or set SOURCE_URL to a raw hosted URL.")
+    assert(loadstring, "loadstring is not available in this environment. Use the ModuleScript require setup instead.")
+
+    local ok, source = pcall(function()
+        return game:HttpGet(SOURCE_URL)
+    end)
+
+    assert(ok and type(source) == "string" and source ~= "", "Failed to download SingularityUI.lua from SOURCE_URL.")
+
+    local chunk, compileError = loadstring(source)
+    assert(chunk, "Downloaded source did not compile. Check SOURCE_URL. Error: " .. tostring(compileError))
+
+    return chunk()
+end
+
+local Singularity = loadSingularity()
 
 local Window = Singularity:CreateWindow({
     Title = "Singularity",
-    Subtitle = "WindUI-style base",
-    Theme = "Dark",
-    Size = UDim2.fromOffset(660, 460),
+    Subtitle = "for Roblox",
+    Theme = "Reference",
+    LogoText = "Z",
+    NavigationTitle = "Combat",
+    FooterTitle = "Sub expires in 23d",
+    FooterText = "Session duration: 0:12",
+    Size = UDim2.fromOffset(988, 610),
     ToggleKey = Enum.KeyCode.RightShift
 })
 
-local Main = Window:Tab({
-    Title = "Main",
-    Icon = "M"
+local Page = Window:Tab({
+    Title = "Page",
+    Icon = "A",
+    Segments = { "Combat", "Weapon", "FoV" }
 })
 
 local Settings = Window:Tab({
@@ -18,16 +48,23 @@ local Settings = Window:Tab({
     Icon = "S"
 })
 
-Main:Section("General")
-
-Main:Paragraph({
-    Title = "Singularity UI",
-    Content = "A custom interface shell with tabs, controls, flags, and notifications."
+local Aimbot = Page:Group({
+    Title = "Aimbot",
+    Icon = "A",
+    Height = 440
 })
 
-Main:Button({
-    Title = "Show Notification",
-    Desc = "Runs a simple callback",
+Aimbot:Toggle({
+    Title = "Toggle",
+    Default = false,
+    Flag = "Enabled",
+    Callback = function(value)
+        print("Toggle:", value)
+    end
+})
+
+Aimbot:Button({
+    Title = "Click Me",
     Callback = function()
         Window:Notify({
             Title = "Singularity",
@@ -37,37 +74,45 @@ Main:Button({
     end
 })
 
-Main:Toggle({
-    Title = "Example Toggle",
-    Desc = "Stores its state in Window.Flags.Enabled",
-    Default = false,
-    Flag = "Enabled",
-    Callback = function(value)
-        print("Toggle:", value)
-    end
-})
-
-Main:Slider({
-    Title = "Walk Speed",
-    Desc = "Example numeric value",
-    Min = 16,
+Aimbot:Slider({
+    Title = "Slider",
+    Min = 0,
     Max = 100,
-    Default = 24,
+    Default = 50,
     Step = 1,
-    Flag = "WalkSpeed",
+    Suffix = "%",
+    Flag = "Slider",
     Callback = function(value)
-        print("WalkSpeed:", value)
+        print("Slider:", value)
     end
 })
 
-Main:Dropdown({
-    Title = "Mode",
-    Values = { "Legit", "Rage", "Utility" },
-    Default = "Legit",
-    Flag = "Mode",
+Aimbot:Dropdown({
+    Title = "Dropdown",
+    Values = { "Option 1", "Option 2", "Option 3" },
+    Default = "Option 2",
+    Flag = "Dropdown",
     Callback = function(value)
-        print("Mode:", value)
+        print("Dropdown:", value)
     end
+})
+
+Aimbot:Toggle({
+    Title = "Label",
+    Default = true,
+    Flag = "LabelToggle"
+})
+
+Aimbot:Keybind({
+    Title = "Label",
+    Default = Enum.KeyCode.E,
+    Flag = "LabelKey"
+})
+
+Aimbot:Input({
+    Title = "Text",
+    Default = "Text",
+    Flag = "Text"
 })
 
 Settings:Section("Personalize")

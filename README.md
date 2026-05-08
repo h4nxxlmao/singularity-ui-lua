@@ -1,6 +1,6 @@
 # Singularity UI Lua
 
-A custom Roblox Luau UI library inspired by WindUI's layout style: draggable window, sidebar tabs, cards, controls, flags, themes, keybinds, and notifications.
+A custom Roblox Luau UI library inspired by WindUI and compact premium game menus: draggable window, identity sidebar, segmented page tabs, grouped controls, flags, themes, keybinds, and notifications.
 
 ## Files
 
@@ -10,18 +10,28 @@ A custom Roblox Luau UI library inspired by WindUI's layout style: draggable win
 ## Quick Start
 
 ```lua
-local Singularity = loadstring(game:HttpGet("https://raw.githubusercontent.com/your-username/singularity-ui-lua/main/src/SingularityUI.lua"))()
+local Singularity = require(game:GetService("ReplicatedStorage"):WaitForChild("SingularityUI"))
 
 local Window = Singularity:CreateWindow({
     Title = "Singularity",
-    Subtitle = "Custom Lua UI",
-    Theme = "Dark",
+    Subtitle = "for Roblox",
+    Theme = "Reference",
+    LogoText = "Z",
     ToggleKey = Enum.KeyCode.RightShift
 })
 
-local Main = Window:Tab({ Title = "Main", Icon = "M" })
+local Main = Window:Tab({
+    Title = "Page",
+    Icon = "A",
+    Segments = { "Combat", "Weapon", "FoV" }
+})
 
-Main:Button({
+local Aimbot = Main:Group({
+    Title = "Aimbot",
+    Icon = "A"
+})
+
+Aimbot:Button({
     Title = "Click Me",
     Callback = function()
         Window:Notify({
@@ -32,7 +42,17 @@ Main:Button({
 })
 ```
 
-Replace `your-username` with the account or raw URL where you host `src/SingularityUI.lua`. You can also put the file in a ModuleScript and use `require(...)`.
+For Studio, put `src/SingularityUI.lua` into `ReplicatedStorage` as a ModuleScript named `SingularityUI`, then run `examples/example.client.lua` from a LocalScript.
+
+For a loadstring executor, host `src/SingularityUI.lua` somewhere raw first, then use:
+
+```lua
+local url = "https://raw.githubusercontent.com/your-username/singularity-ui-lua/main/src/SingularityUI.lua"
+local source = game:HttpGet(url)
+assert(loadstring, "loadstring is not available here")
+local chunk, compileError = loadstring(source)
+local Singularity = assert(chunk, compileError)()
+```
 
 ## API
 
@@ -49,6 +69,7 @@ Window:
 Tab controls:
 
 - `Tab:Section(title)`
+- `Tab:Group(options)`
 - `Tab:Paragraph(options)`
 - `Tab:Button(options)`
 - `Tab:Toggle(options)`
@@ -77,6 +98,7 @@ Most controls accept:
 Built-in themes:
 
 - `Dark`
+- `Reference`
 - `Light`
 - `Obsidian`
 

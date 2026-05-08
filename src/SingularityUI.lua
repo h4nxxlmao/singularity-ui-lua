@@ -32,20 +32,38 @@ Control.__index = Control
 
 Singularity.Themes = {
     Dark = {
-        Window = Color3.fromRGB(14, 16, 22),
-        Topbar = Color3.fromRGB(17, 19, 27),
-        Sidebar = Color3.fromRGB(12, 14, 20),
-        Surface = Color3.fromRGB(23, 26, 36),
-        SurfaceHover = Color3.fromRGB(29, 33, 45),
-        Input = Color3.fromRGB(18, 21, 30),
-        Stroke = Color3.fromRGB(55, 62, 82),
-        Accent = Color3.fromRGB(91, 141, 255),
-        AccentDark = Color3.fromRGB(57, 92, 190),
-        Text = Color3.fromRGB(242, 245, 255),
-        Subtext = Color3.fromRGB(158, 167, 188),
-        Muted = Color3.fromRGB(101, 111, 136),
-        Success = Color3.fromRGB(52, 199, 128),
-        Warning = Color3.fromRGB(245, 173, 66),
+        Window = Color3.fromRGB(9, 14, 13),
+        Topbar = Color3.fromRGB(13, 19, 18),
+        Sidebar = Color3.fromRGB(8, 12, 11),
+        Surface = Color3.fromRGB(14, 20, 19),
+        SurfaceHover = Color3.fromRGB(25, 32, 31),
+        Input = Color3.fromRGB(22, 29, 28),
+        Stroke = Color3.fromRGB(39, 50, 49),
+        Accent = Color3.fromRGB(235, 240, 237),
+        AccentDark = Color3.fromRGB(30, 38, 37),
+        Text = Color3.fromRGB(242, 246, 244),
+        Subtext = Color3.fromRGB(142, 150, 148),
+        Muted = Color3.fromRGB(92, 101, 99),
+        Success = Color3.fromRGB(82, 209, 145),
+        Warning = Color3.fromRGB(245, 187, 75),
+        Danger = Color3.fromRGB(239, 82, 94)
+    },
+
+    Reference = {
+        Window = Color3.fromRGB(9, 14, 13),
+        Topbar = Color3.fromRGB(13, 19, 18),
+        Sidebar = Color3.fromRGB(8, 12, 11),
+        Surface = Color3.fromRGB(14, 20, 19),
+        SurfaceHover = Color3.fromRGB(25, 32, 31),
+        Input = Color3.fromRGB(22, 29, 28),
+        Stroke = Color3.fromRGB(39, 50, 49),
+        Accent = Color3.fromRGB(235, 240, 237),
+        AccentDark = Color3.fromRGB(30, 38, 37),
+        Text = Color3.fromRGB(242, 246, 244),
+        Subtext = Color3.fromRGB(142, 150, 148),
+        Muted = Color3.fromRGB(92, 101, 99),
+        Success = Color3.fromRGB(82, 209, 145),
+        Warning = Color3.fromRGB(245, 187, 75),
         Danger = Color3.fromRGB(239, 82, 94)
     },
 
@@ -504,7 +522,8 @@ end
 function Window:_build()
     local options = self.Options
     local theme = self.Theme
-    local size = options.Size or UDim2.fromOffset(660, 460)
+    local size = options.Size or UDim2.fromOffset(988, 610)
+    local sidebarWidth = options.SidebarWidth or 365
 
     local screenGui = create("ScreenGui", {
         Name = options.Name or "SingularityUI",
@@ -526,44 +545,160 @@ function Window:_build()
     addStroke(main, theme.Stroke, 0.15)
 
     local sizeConstraint = create("UISizeConstraint", {
-        MinSize = Vector2.new(430, 300),
-        MaxSize = Vector2.new(980, 720),
+        MinSize = Vector2.new(640, 410),
+        MaxSize = Vector2.new(1100, 760),
         Parent = main
     })
 
-    local topbar = create("Frame", {
-        BackgroundColor3 = theme.Topbar,
+    local sidebar = create("Frame", {
+        BackgroundTransparency = 1,
         BorderSizePixel = 0,
-        Size = UDim2.new(1, 0, 0, 54),
+        Position = UDim2.fromOffset(12, 12),
+        Size = UDim2.new(0, sidebarWidth, 1, -24),
         Parent = main
     })
 
-    local topbarLine = create("Frame", {
+    local brandCard = create("Frame", {
+        BackgroundColor3 = theme.Surface,
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 0, 108),
+        Parent = sidebar
+    })
+    addCorner(brandCard, 9)
+    addStroke(brandCard, theme.Stroke, 0.52)
+
+    local logo = create("Frame", {
+        BackgroundColor3 = Color3.fromRGB(4, 6, 6),
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(20, 20),
+        Size = UDim2.fromOffset(70, 70),
+        Parent = brandCard
+    })
+    addCorner(logo, 11)
+    addStroke(logo, theme.Stroke, 0.72)
+
+    if options.Logo then
+        local logoImage = makeIcon(logo, options.Logo, theme, 36)
+        logoImage.AnchorPoint = Vector2.new(0.5, 0.5)
+        logoImage.Position = UDim2.fromScale(0.5, 0.5)
+    else
+        makeText(logo, tostring(options.LogoText or options.Title or "S"):sub(1, 1), 24, theme.Text, Enum.Font.GothamBold, {
+            Size = UDim2.fromScale(1, 1),
+            TextXAlignment = Enum.TextXAlignment.Center
+        })
+    end
+
+    local title = makeText(brandCard, options.Title or "Singularity", 20, theme.Text, Enum.Font.GothamBold, {
+        Position = UDim2.fromOffset(112, 30),
+        Size = UDim2.new(1, -128, 0, 26)
+    })
+
+    makeText(brandCard, options.Subtitle or options.Game or "for Roblox", 18, theme.Subtext, Enum.Font.GothamBold, {
+        Position = UDim2.fromOffset(112, 56),
+        Size = UDim2.new(1, -128, 0, 24)
+    })
+
+    makeText(sidebar, options.NavigationTitle or "Pages", 18, theme.Subtext, Enum.Font.Gotham, {
+        Position = UDim2.fromOffset(4, 126),
+        Size = UDim2.new(1, -8, 0, 24)
+    })
+
+    local tabHolder = create("Frame", {
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(0, 164),
+        Size = UDim2.new(1, 0, 1, -260),
+        Parent = sidebar
+    })
+
+    create("UIListLayout", {
+        FillDirection = Enum.FillDirection.Vertical,
+        Padding = UDim.new(0, 12),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = tabHolder
+    })
+
+    local footer = create("Frame", {
         AnchorPoint = Vector2.new(0, 1),
-        BackgroundColor3 = theme.Stroke,
-        BackgroundTransparency = 0.35,
+        BackgroundColor3 = theme.Surface,
         BorderSizePixel = 0,
         Position = UDim2.new(0, 0, 1, 0),
-        Size = UDim2.new(1, 0, 0, 1),
-        Parent = topbar
+        Size = UDim2.new(1, 0, 0, 82),
+        Parent = sidebar
+    })
+    addCorner(footer, 8)
+    addStroke(footer, theme.Stroke, 0.58)
+
+    makeText(footer, options.FooterTitle or "Sub expires in 23d", 15, theme.Subtext, Enum.Font.GothamBold, {
+        Position = UDim2.fromOffset(18, 16),
+        Size = UDim2.new(1, -36, 0, 22)
     })
 
-    local title = makeText(topbar, options.Title or "Singularity", 16, theme.Text, Enum.Font.GothamBold, {
-        Position = UDim2.fromOffset(18, 8),
-        Size = UDim2.new(1, -150, 0, 22)
+    makeText(footer, options.FooterText or "Session duration: 0:12", 17, theme.Text, Enum.Font.GothamBold, {
+        Position = UDim2.fromOffset(18, 40),
+        Size = UDim2.new(1, -36, 0, 24)
     })
 
-    makeText(topbar, options.Subtitle or options.Author or "Custom Lua UI", 12, theme.Subtext, Enum.Font.Gotham, {
-        Position = UDim2.fromOffset(18, 29),
-        Size = UDim2.new(1, -150, 0, 18)
+    local divider = create("Frame", {
+        BackgroundColor3 = theme.Stroke,
+        BackgroundTransparency = 0.55,
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(sidebarWidth + 24, 18),
+        Size = UDim2.new(0, 1, 1, -36),
+        Parent = main
+    })
+
+    local contentShell = create("Frame", {
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(sidebarWidth + 34, 0),
+        Size = UDim2.new(1, -sidebarWidth - 46, 1, 0),
+        Parent = main
+    })
+
+    local pageTitle = makeText(contentShell, "Page", 25, theme.Text, Enum.Font.GothamBold, {
+        Position = UDim2.fromOffset(22, 36),
+        Size = UDim2.new(1, -110, 0, 32)
+    })
+
+    local segmentHolder = create("Frame", {
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(22, 82),
+        Size = UDim2.new(1, -44, 0, 46),
+        Parent = contentShell
+    })
+
+    create("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        HorizontalAlignment = Enum.HorizontalAlignment.Left,
+        Padding = UDim.new(0, 0),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = segmentHolder
+    })
+
+    local pageHolder = create("Frame", {
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(20, 146),
+        Size = UDim2.new(1, -40, 1, -166),
+        Parent = contentShell
+    })
+
+    local dragHeader = create("Frame", {
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(sidebarWidth + 24, 0),
+        Size = UDim2.new(1, -sidebarWidth - 24, 0, 76),
+        Parent = main
     })
 
     local actions = create("Frame", {
         AnchorPoint = Vector2.new(1, 0),
         BackgroundTransparency = 1,
-        Position = UDim2.new(1, -12, 0, 11),
-        Size = UDim2.fromOffset(74, 32),
-        Parent = topbar
+        Position = UDim2.new(1, -16, 0, 18),
+        Size = UDim2.fromOffset(66, 28),
+        Parent = main
     })
 
     create("UIListLayout", {
@@ -577,61 +712,26 @@ function Window:_build()
     local minimize = self:_topButton(actions, "-", theme.Subtext)
     local close = self:_topButton(actions, "x", theme.Danger)
 
-    local sidebar = create("Frame", {
-        BackgroundColor3 = theme.Sidebar,
-        BorderSizePixel = 0,
-        Position = UDim2.fromOffset(0, 54),
-        Size = UDim2.new(0, 176, 1, -54),
-        Parent = main
-    })
-
-    local sidebarLine = create("Frame", {
-        AnchorPoint = Vector2.new(1, 0),
-        BackgroundColor3 = theme.Stroke,
-        BackgroundTransparency = 0.45,
-        BorderSizePixel = 0,
-        Position = UDim2.new(1, 0, 0, 0),
-        Size = UDim2.new(0, 1, 1, 0),
-        Parent = sidebar
-    })
-
-    local tabHolder = create("Frame", {
-        BackgroundTransparency = 1,
-        Position = UDim2.fromOffset(12, 12),
-        Size = UDim2.new(1, -24, 1, -24),
-        Parent = sidebar
-    })
-
-    create("UIListLayout", {
-        FillDirection = Enum.FillDirection.Vertical,
-        Padding = UDim.new(0, 8),
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Parent = tabHolder
-    })
-
-    local content = create("Frame", {
-        BackgroundTransparency = 1,
-        Position = UDim2.fromOffset(176, 54),
-        Size = UDim2.new(1, -176, 1, -54),
-        Parent = main
-    })
-
     self.ScreenGui = screenGui
     self.Main = main
-    self.Topbar = topbar
+    self.Topbar = dragHeader
     self.TitleLabel = title
-    self.TopbarLine = topbarLine
+    self.PageTitle = pageTitle
+    self.SegmentHolder = segmentHolder
+    self.TopbarLine = divider
     self.MinimizeButton = minimize
     self.CloseButton = close
     self.SizeConstraint = sizeConstraint
     self.Sidebar = sidebar
-    self.SidebarLine = sidebarLine
+    self.SidebarLine = divider
     self.TabHolder = tabHolder
-    self.Content = content
+    self.ContentShell = contentShell
+    self.Content = pageHolder
     self.OriginalSize = size
-    self.MinimizedSize = UDim2.new(size.X.Scale, size.X.Offset, 0, 54)
+    self.MinimizedSize = UDim2.new(size.X.Scale, size.X.Offset, 0, 72)
 
-    self:_makeDraggable(topbar)
+    self:_makeDraggable(brandCard)
+    self:_makeDraggable(dragHeader)
 
     minimize.MouseButton1Click:Connect(function()
         self:SetMinimized(not self._minimized)
@@ -657,22 +757,21 @@ function Window:_build()
 
     mountGui(screenGui)
 end
-
 function Window:_topButton(parent, text, textColor)
     local button = create("TextButton", {
         AutoButtonColor = false,
-        BackgroundColor3 = self.Theme.Surface,
-        BackgroundTransparency = 0.12,
+        BackgroundColor3 = self.Theme.Input,
+        BackgroundTransparency = 0.1,
         BorderSizePixel = 0,
         Font = Enum.Font.GothamBold,
         Text = text,
         TextColor3 = textColor,
         TextSize = 14,
-        Size = UDim2.fromOffset(32, 32),
+        Size = UDim2.fromOffset(28, 28),
         Parent = parent
     })
 
-    addCorner(button, 8)
+    addCorner(button, 7)
     addStroke(button, self.Theme.Stroke, 0.55)
 
     button.MouseEnter:Connect(function()
@@ -729,11 +828,11 @@ end
 function Window:SetMinimized(value)
     self._minimized = value
     self.Sidebar.Visible = not value
-    self.Content.Visible = not value
+    self.ContentShell.Visible = not value
     self.MinimizeButton.Text = value and "+" or "-"
 
     if self.SizeConstraint then
-        self.SizeConstraint.MinSize = value and Vector2.new(430, 54) or Vector2.new(430, 300)
+        self.SizeConstraint.MinSize = value and Vector2.new(640, 72) or Vector2.new(640, 410)
     end
 
     tween(self.Main, {
@@ -772,6 +871,9 @@ function Window:Tab(options)
         Window = self,
         Title = options.Title or options.Name or ("Tab " .. tostring(#self.Tabs + 1)),
         Icon = options.Icon,
+        Segments = options.Segments or options.Subtabs or options.Sections or {},
+        ActiveSegment = options.ActiveSegment or options.DefaultSegment,
+        SegmentCallback = options.SegmentCallback,
         Controls = {}
     }, Tab)
 
@@ -792,11 +894,17 @@ Window.CreateTab = Window.Tab
 function Window:_selectTab(targetTab)
     self.ActiveTab = targetTab
 
+    if self.PageTitle then
+        self.PageTitle.Text = targetTab.Title
+    end
+
+    self:_renderSegments(targetTab)
+
     for _, tab in ipairs(self.Tabs) do
         local selected = tab == targetTab
         tab.Page.Visible = selected
         tab.Button.BackgroundTransparency = selected and 0 or 1
-        tab.Button.BackgroundColor3 = selected and self.Theme.AccentDark or self.Theme.Sidebar
+        tab.Button.BackgroundColor3 = selected and self.Theme.SurfaceHover or self.Theme.Sidebar
         tab.TitleLabel.TextColor3 = selected and self.Theme.Text or self.Theme.Subtext
 
         if tab.IconObject then
@@ -806,6 +914,58 @@ function Window:_selectTab(targetTab)
                 tab.IconObject.TextColor3 = selected and self.Theme.Text or self.Theme.Subtext
             end
         end
+    end
+end
+
+function Window:_renderSegments(tab)
+    if not self.SegmentHolder then
+        return
+    end
+
+    for _, child in ipairs(self.SegmentHolder:GetChildren()) do
+        if child:IsA("GuiButton") then
+            child:Destroy()
+        end
+    end
+
+    local segments = tab.Segments or {}
+
+    if #segments == 0 then
+        self.SegmentHolder.Visible = false
+        return
+    end
+
+    self.SegmentHolder.Visible = true
+    tab.ActiveSegment = tab.ActiveSegment or optionTitle(segments[1])
+
+    for index, segment in ipairs(segments) do
+        local label = optionTitle(segment)
+        local selected = label == tab.ActiveSegment
+        local button = create("TextButton", {
+            AutoButtonColor = false,
+            BackgroundColor3 = selected and self.Theme.SurfaceHover or self.Theme.Sidebar,
+            BackgroundTransparency = selected and 0 or 0.45,
+            BorderSizePixel = 0,
+            Font = Enum.Font.GothamBold,
+            LayoutOrder = index,
+            Text = label,
+            TextColor3 = selected and self.Theme.Text or self.Theme.Muted,
+            TextSize = 21,
+            Size = UDim2.fromOffset(math.max(78, (#label * 12) + 32), 46),
+            Parent = self.SegmentHolder
+        })
+
+        addCorner(button, 11)
+
+        if selected then
+            addStroke(button, self.Theme.Stroke, 0.8)
+        end
+
+        button.MouseButton1Click:Connect(function()
+            tab.ActiveSegment = label
+            self:_renderSegments(tab)
+            safeCall(tab.SegmentCallback, label)
+        end)
     end
 end
 
@@ -819,19 +979,19 @@ function Tab:_build()
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         Text = "",
-        Size = UDim2.new(1, 0, 0, 40),
+        Size = UDim2.new(1, 0, 0, 54),
         Parent = window.TabHolder
     })
-    addCorner(button, 8)
+    addCorner(button, 9)
 
-    local icon = makeIcon(button, self.Icon, theme, 18)
+    local icon = makeIcon(button, self.Icon or self.Title:sub(1, 1), theme, 30)
 
     if icon then
-        icon.Position = UDim2.fromOffset(11, 11)
+        icon.Position = UDim2.fromOffset(20, 12)
     end
 
-    local titleOffset = icon and 38 or 14
-    local title = makeText(button, self.Title, 13, theme.Subtext, Enum.Font.GothamBold, {
+    local titleOffset = icon and 68 or 20
+    local title = makeText(button, self.Title, 22, theme.Subtext, Enum.Font.GothamBold, {
         Position = UDim2.fromOffset(titleOffset, 0),
         Size = UDim2.new(1, -titleOffset - 10, 1, 0)
     })
@@ -849,11 +1009,11 @@ function Tab:_build()
         Parent = window.Content
     })
 
-    addPadding(page, 16, 16, 16, 16)
+    addPadding(page, 0, 0, 0, 0)
 
     create("UIListLayout", {
         FillDirection = Enum.FillDirection.Vertical,
-        Padding = UDim.new(0, 10),
+        Padding = UDim.new(0, 12),
         SortOrder = Enum.SortOrder.LayoutOrder,
         Parent = page
     })
@@ -889,27 +1049,32 @@ function Tab:_base(options, height)
 
     local theme = self.Window.Theme
     local hasBodyText = hasSupportText(options)
+    local insetX = self.IsGroup and 22 or 14
     local frame = create("Frame", {
-        BackgroundColor3 = theme.Surface,
+        BackgroundColor3 = self.IsGroup and theme.Window or theme.Surface,
+        BackgroundTransparency = self.IsGroup and 1 or 0,
         BorderSizePixel = 0,
         ClipsDescendants = true,
         Size = UDim2.new(1, 0, 0, height or 64),
         Parent = self.Page
     })
-    addCorner(frame, 8)
-    addStroke(frame, theme.Stroke, 0.45)
 
-    local title = makeText(frame, options.Title or options.Name or "Control", 14, theme.Text, Enum.Font.GothamBold, {
-        Position = UDim2.fromOffset(14, hasBodyText and 11 or 0),
-        Size = UDim2.new(1, -28, 0, hasBodyText and 20 or height or 64)
+    if not self.IsGroup then
+        addCorner(frame, 8)
+        addStroke(frame, theme.Stroke, 0.45)
+    end
+
+    local title = makeText(frame, options.Title or options.Name or "Control", self.IsGroup and 21 or 14, theme.Text, Enum.Font.GothamBold, {
+        Position = UDim2.fromOffset(insetX, hasBodyText and 8 or 0),
+        Size = UDim2.new(1, -(insetX * 2), 0, hasBodyText and 22 or height or 64)
     })
 
     local desc = nil
 
     if hasBodyText then
         desc = makeText(frame, options.Desc or options.Description or options.Content, 12, theme.Subtext, Enum.Font.Gotham, {
-            Position = UDim2.fromOffset(14, 33),
-            Size = UDim2.new(1, -28, 0, 20)
+            Position = UDim2.fromOffset(insetX, 32),
+            Size = UDim2.new(1, -(insetX * 2), 0, 20)
         })
     end
 
@@ -924,6 +1089,58 @@ function Tab:_base(options, height)
 
     table.insert(self.Controls, control)
     return control
+end
+
+function Tab:Group(options)
+    options = normalizeOptions(options)
+
+    local theme = self.Window.Theme
+    local height = options.Height or 428
+    local frame = create("Frame", {
+        BackgroundColor3 = theme.Window,
+        BorderSizePixel = 0,
+        ClipsDescendants = true,
+        Size = UDim2.new(1, 0, 0, height),
+        Parent = self.Page
+    })
+    addCorner(frame, 9)
+    addStroke(frame, theme.Stroke, 0.42, 1)
+
+    local icon = makeIcon(frame, options.Icon or "A", theme, 30)
+    icon.Position = UDim2.fromOffset(20, 18)
+
+    makeText(frame, options.Title or options.Name or "Group", 21, theme.Muted, Enum.Font.GothamBold, {
+        Position = UDim2.fromOffset(62, 18),
+        Size = UDim2.new(1, -84, 0, 32)
+    })
+
+    local content = create("Frame", {
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(0, 58),
+        Size = UDim2.new(1, 0, 1, -70),
+        Parent = frame
+    })
+
+    create("UIListLayout", {
+        FillDirection = Enum.FillDirection.Vertical,
+        Padding = UDim.new(0, 4),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = content
+    })
+
+    local group = setmetatable({
+        Window = self.Window,
+        ParentTab = self,
+        Page = content,
+        Controls = {},
+        IsGroup = true,
+        Frame = frame
+    }, {
+        __index = Tab
+    })
+
+    return group
 end
 
 function Tab:Section(title)
@@ -955,6 +1172,54 @@ end
 
 function Tab:Button(options)
     options = normalizeOptions(options)
+
+    if self.IsGroup or options.Full then
+        local theme = self.Window.Theme
+        local row = create("Frame", {
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            Size = UDim2.new(1, 0, 0, 46),
+            Parent = self.Page
+        })
+
+        local button = create("TextButton", {
+            AutoButtonColor = false,
+            BackgroundColor3 = theme.Input,
+            BorderSizePixel = 0,
+            Font = Enum.Font.GothamBold,
+            Position = UDim2.fromOffset(22, 0),
+            Size = UDim2.new(1, -44, 1, 0),
+            Text = options.Title or options.Name or "Button",
+            TextColor3 = theme.Text,
+            TextSize = 21,
+            Parent = row
+        })
+        addCorner(button, 8)
+        addStroke(button, theme.Stroke, 0.12)
+
+        button.MouseEnter:Connect(function()
+            tween(button, { BackgroundColor3 = theme.SurfaceHover }, DEFAULT_TWEEN)
+        end)
+
+        button.MouseLeave:Connect(function()
+            tween(button, { BackgroundColor3 = theme.Input }, DEFAULT_TWEEN)
+        end)
+
+        button.MouseButton1Click:Connect(function()
+            safeCall(options.Callback)
+        end)
+
+        local control = setmetatable({
+            Tab = self,
+            Window = self.Window,
+            Frame = row,
+            Button = button,
+            Options = options
+        }, Control)
+
+        table.insert(self.Controls, control)
+        return control
+    end
 
     local control = self:_base(options, hasSupportText(options) and 66 or 48)
     local frame = control.Frame
@@ -996,38 +1261,40 @@ end
 function Tab:Toggle(options)
     options = normalizeOptions(options)
 
-    local control = self:_base(options, hasSupportText(options) and 66 or 52)
+    local control = self:_base(options, self.IsGroup and 42 or (hasSupportText(options) and 66 or 52))
     local frame = control.Frame
     local theme = self.Window.Theme
     local value = firstDefined(options.Default, options.Value, false)
 
     if control.Title then
-        control.Title.Size = UDim2.new(1, -88, 0, control.Desc and 20 or frame.Size.Y.Offset)
+        control.Title.Size = UDim2.new(1, -74, 0, control.Desc and 20 or frame.Size.Y.Offset)
     end
 
     if control.Desc then
-        control.Desc.Size = UDim2.new(1, -88, 0, 20)
+        control.Desc.Size = UDim2.new(1, -74, 0, 20)
     end
 
     local track = create("Frame", {
         AnchorPoint = Vector2.new(1, 0.5),
         BackgroundColor3 = value and theme.Accent or theme.Input,
         BorderSizePixel = 0,
-        Position = UDim2.new(1, -14, 0.5, 0),
-        Size = UDim2.fromOffset(48, 24),
+        Position = UDim2.new(1, self.IsGroup and -22 or -14, 0.5, 0),
+        Size = UDim2.fromOffset(28, 28),
         Parent = frame
     })
-    addCorner(track, 12)
-    addStroke(track, theme.Stroke, 0.6)
+    addCorner(track, 7)
+    addStroke(track, theme.Stroke, 0.15)
 
     local knob = create("Frame", {
-        BackgroundColor3 = theme.Text,
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = theme.Window,
         BorderSizePixel = 0,
-        Position = value and UDim2.fromOffset(26, 3) or UDim2.fromOffset(3, 3),
-        Size = UDim2.fromOffset(18, 18),
+        Position = UDim2.fromScale(0.5, 0.5),
+        Size = UDim2.fromOffset(12, 12),
+        Visible = value,
         Parent = track
     })
-    addCorner(knob, 9)
+    addCorner(knob, 4)
 
     local object = setmetatable({
         Value = value,
@@ -1041,7 +1308,7 @@ function Tab:Toggle(options)
         object.Value = value
 
         tween(track, { BackgroundColor3 = value and theme.Accent or theme.Input }, DEFAULT_TWEEN)
-        tween(knob, { Position = value and UDim2.fromOffset(26, 3) or UDim2.fromOffset(3, 3) }, DEFAULT_TWEEN)
+        knob.Visible = value
 
         if options.Flag then
             self.Window:SetFlag(options.Flag, value)
@@ -1070,20 +1337,21 @@ function Tab:Slider(options)
     local min, max, default = getSliderConfig(options)
     local step = options.Step
     local decimals = options.Rounding or options.Decimals or 0
+    local suffix = options.Suffix or ""
     local value = math.clamp(default, min, max)
     local theme = self.Window.Theme
     local control = self:_base(options, hasSupportText(options) and 86 or 74)
     local frame = control.Frame
 
-    local valueLabel = makeText(frame, tostring(value), 13, theme.Accent, Enum.Font.GothamBold, {
+    local valueLabel = makeText(frame, tostring(value) .. suffix, self.IsGroup and 21 or 13, theme.Muted, Enum.Font.GothamBold, {
         AnchorPoint = Vector2.new(1, 0),
-        Position = UDim2.new(1, -14, 0, control.Desc and 12 or 14),
+        Position = UDim2.new(1, self.IsGroup and -22 or -14, 0, self.IsGroup and 0 or (control.Desc and 12 or 14)),
         Size = UDim2.fromOffset(82, 20),
         TextXAlignment = Enum.TextXAlignment.Right
     })
 
     if control.Title then
-        control.Title.Size = UDim2.new(1, -116, 0, 20)
+        control.Title.Size = UDim2.new(1, -116, 0, self.IsGroup and 28 or 20)
     end
 
     if control.Desc then
@@ -1091,11 +1359,11 @@ function Tab:Slider(options)
     end
 
     local track = create("Frame", {
-        AnchorPoint = Vector2.new(0, 1),
+        AnchorPoint = self.IsGroup and Vector2.new(0, 0) or Vector2.new(0, 1),
         BackgroundColor3 = theme.Input,
         BorderSizePixel = 0,
-        Position = UDim2.new(0, 14, 1, -18),
-        Size = UDim2.new(1, -28, 0, 8),
+        Position = self.IsGroup and UDim2.fromOffset(22, 42) or UDim2.new(0, 14, 1, -18),
+        Size = UDim2.new(1, self.IsGroup and -44 or -28, 0, 8),
         Parent = frame
     })
     addCorner(track, 4)
@@ -1139,7 +1407,7 @@ function Tab:Slider(options)
             alpha = 0
         end
 
-        valueLabel.Text = tostring(value)
+        valueLabel.Text = tostring(value) .. suffix
         tween(fill, { Size = UDim2.fromScale(alpha, 1) }, DEFAULT_TWEEN)
         tween(handle, { Position = UDim2.fromScale(alpha, 0.5) }, DEFAULT_TWEEN)
 
@@ -1184,6 +1452,72 @@ end
 
 function Tab:Input(options)
     options = normalizeOptions(options)
+
+    if self.IsGroup or options.Full then
+        local theme = self.Window.Theme
+        local value = firstDefined(options.Default, options.Value, options.Text, "")
+        local row = create("Frame", {
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            Size = UDim2.new(1, 0, 0, 48),
+            Parent = self.Page
+        })
+
+        local box = create("TextBox", {
+            BackgroundColor3 = theme.Input,
+            BorderSizePixel = 0,
+            ClearTextOnFocus = false,
+            Font = Enum.Font.GothamBold,
+            PlaceholderText = options.Placeholder or options.Title or "",
+            PlaceholderColor3 = theme.Muted,
+            Position = UDim2.fromOffset(22, 0),
+            Size = UDim2.new(1, -44, 1, 0),
+            Text = tostring(value),
+            TextColor3 = theme.Text,
+            TextSize = 20,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = row
+        })
+        addCorner(box, 8)
+        addStroke(box, theme.Stroke, 0.12)
+        addPadding(box, 16, 0, 16, 0)
+
+        local control = setmetatable({
+            Tab = self,
+            Window = self.Window,
+            Frame = row,
+            Box = box,
+            Value = value,
+            Options = options
+        }, Control)
+
+        local function apply(nextValue, silent)
+            if options.Numeric then
+                nextValue = tonumber(nextValue) or 0
+            end
+
+            value = nextValue
+            control.Value = value
+            box.Text = tostring(value)
+
+            if options.Flag then
+                self.Window:SetFlag(options.Flag, value)
+            end
+
+            if not silent then
+                safeCall(options.Callback, value)
+            end
+        end
+
+        control.Set = apply
+
+        box.FocusLost:Connect(function()
+            apply(box.Text)
+        end)
+
+        apply(value, true)
+        return control
+    end
 
     local theme = self.Window.Theme
     local control = self:_base(options, hasSupportText(options) and 78 or 64)
@@ -1265,7 +1599,7 @@ function Tab:Dropdown(options)
     local theme = self.Window.Theme
     local values = options.Values or options.Options or {}
     local multi = options.Multi or false
-    local collapsedHeight = hasSupportText(options) and 76 or 62
+    local collapsedHeight = self.IsGroup and 44 or (hasSupportText(options) and 76 or 62)
     local maxVisible = options.MaxVisible or 5
     local optionHeight = 32
     local expandedHeight = collapsedHeight + (math.min(#values, maxVisible) * (optionHeight + 4)) + 14
@@ -1291,7 +1625,7 @@ function Tab:Dropdown(options)
     end
 
     if control.Title then
-        control.Title.Size = UDim2.new(1, -220, 0, 20)
+        control.Title.Size = UDim2.new(1, self.IsGroup and -184 or -220, 0, self.IsGroup and 44 or 20)
     end
 
     if control.Desc then
@@ -1299,20 +1633,20 @@ function Tab:Dropdown(options)
     end
 
     local selectButton = create("TextButton", {
-        AnchorPoint = Vector2.new(1, 0),
+        AnchorPoint = self.IsGroup and Vector2.new(1, 0.5) or Vector2.new(1, 0),
         AutoButtonColor = false,
         BackgroundColor3 = theme.Input,
         BorderSizePixel = 0,
         Font = Enum.Font.Gotham,
-        Position = UDim2.new(1, -14, 0, 15),
-        Size = UDim2.fromOffset(options.Width or 190, 32),
+        Position = self.IsGroup and UDim2.new(1, -22, 0.5, 0) or UDim2.new(1, -14, 0, 15),
+        Size = UDim2.fromOffset(options.Width or (self.IsGroup and 144 or 190), self.IsGroup and 42 or 32),
         Text = "",
         Parent = frame
     })
     addCorner(selectButton, 8)
     addStroke(selectButton, theme.Stroke, 0.55)
 
-    local selectText = makeText(selectButton, options.Placeholder or "Select", 13, theme.Text, Enum.Font.Gotham, {
+    local selectText = makeText(selectButton, options.Placeholder or "Select", self.IsGroup and 15 or 13, theme.Subtext, Enum.Font.GothamBold, {
         Position = UDim2.fromOffset(10, 0),
         Size = UDim2.new(1, -34, 1, 0)
     })
@@ -1330,10 +1664,10 @@ function Tab:Dropdown(options)
         BorderSizePixel = 0,
         CanvasSize = UDim2.fromScale(0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
-        Position = UDim2.fromOffset(14, collapsedHeight - 4),
+        Position = UDim2.fromOffset(self.IsGroup and 22 or 14, collapsedHeight - 4),
         ScrollBarImageColor3 = theme.Accent,
         ScrollBarThickness = 3,
-        Size = UDim2.new(1, -28, 0, math.min(#values, maxVisible) * (optionHeight + 4)),
+        Size = UDim2.new(1, self.IsGroup and -44 or -28, 0, math.min(#values, maxVisible) * (optionHeight + 4)),
         Visible = false,
         Parent = frame
     })
@@ -1416,7 +1750,7 @@ function Tab:Dropdown(options)
         end
 
         expandedHeight = collapsedHeight + (math.min(#values, maxVisible) * (optionHeight + 4)) + 14
-        list.Size = UDim2.new(1, -28, 0, math.min(#values, maxVisible) * (optionHeight + 4))
+        list.Size = UDim2.new(1, self.IsGroup and -44 or -28, 0, math.min(#values, maxVisible) * (optionHeight + 4))
 
         for _, option in ipairs(values) do
             local value = optionValue(option)
@@ -1476,13 +1810,13 @@ function Tab:Keybind(options)
     options = normalizeOptions(options)
 
     local theme = self.Window.Theme
-    local control = self:_base(options, hasSupportText(options) and 68 or 54)
+    local control = self:_base(options, self.IsGroup and 42 or (hasSupportText(options) and 68 or 54))
     local frame = control.Frame
     local key = firstDefined(options.Default, options.Key, Enum.KeyCode.RightControl)
     local listening = false
 
     if control.Title then
-        control.Title.Size = UDim2.new(1, -150, 0, 20)
+        control.Title.Size = UDim2.new(1, self.IsGroup and -76 or -150, 0, self.IsGroup and 42 or 20)
     end
 
     if control.Desc then
@@ -1495,8 +1829,8 @@ function Tab:Keybind(options)
         BackgroundColor3 = theme.Input,
         BorderSizePixel = 0,
         Font = Enum.Font.GothamBold,
-        Position = UDim2.new(1, -14, 0.5, 0),
-        Size = UDim2.fromOffset(118, 32),
+        Position = UDim2.new(1, self.IsGroup and -22 or -14, 0.5, 0),
+        Size = UDim2.fromOffset(self.IsGroup and 38 or 118, 32),
         Text = formatKeyCode(key),
         TextColor3 = theme.Text,
         TextSize = 13,
@@ -1692,6 +2026,7 @@ function Tab:Colorpicker(options)
 end
 
 Tab.CreateSection = Tab.Section
+Tab.CreateGroup = Tab.Group
 Tab.CreateParagraph = Tab.Paragraph
 Tab.CreateButton = Tab.Button
 Tab.CreateToggle = Tab.Toggle
