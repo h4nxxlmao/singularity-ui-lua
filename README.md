@@ -1,6 +1,6 @@
 # Singularity UI Lua
 
-A custom Roblox Luau UI library inspired by WindUI and compact premium game menus: draggable window, identity sidebar, segmented page tabs, grouped controls, flags, themes, keybinds, and notifications.
+A custom Roblox Luau UI library with a compact black-and-white Singularity Dark style: draggable/resizable window, identity sidebar, segmented page tabs, grouped controls, flags, keybinds, animations, and minimalist toast notifications.
 
 ## Files
 
@@ -14,21 +14,23 @@ local Singularity = require(game:GetService("ReplicatedStorage"):WaitForChild("S
 
 local Window = Singularity:CreateWindow({
     Title = "Singularity",
-    Subtitle = "for Roblox",
-    Theme = "Reference",
-    LogoText = "Z",
+    Subtitle = "Singularity - Dark",
+    Theme = "Singularity",
+    LogoText = "S",
+    Size = UDim2.fromOffset(760, 480),
+    Scale = 0.94,
     ToggleKey = Enum.KeyCode.RightShift
 })
 
 local Main = Window:Tab({
     Title = "Page",
-    Icon = "A",
+    Icon = "page",
     Segments = { "Combat", "Weapon", "FoV" }
 })
 
 local Aimbot = Main:Group({
     Title = "Aimbot",
-    Icon = "A"
+    Icon = "aimbot"
 })
 
 Aimbot:Button({
@@ -93,13 +95,10 @@ Most controls accept:
 }
 ```
 
+Icons can be simple names like `"page"`, `"settings"`, `"aimbot"`, `"combat"`, `"weapon"`, or a Roblox image asset id such as `123456789` / `"rbxassetid://123456789"`.
+
 ## Themes
 
-Built-in themes:
+The library is designed around one theme: `Singularity - Dark`. Use `Theme = "Singularity"` or omit the theme option.
 
-- `Dark`
-- `Reference`
-- `Light`
-- `Obsidian`
-
-You can pass a custom theme table into `CreateWindow({ Theme = { ... } })` using the same color keys found in `Singularity.Themes.Dark`.
+You can still pass a custom theme table into `CreateWindow({ Theme = { ... } })` if you want to override the black-and-white defaults.

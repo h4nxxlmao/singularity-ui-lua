@@ -27,31 +27,32 @@ local Singularity = loadSingularity()
 
 local Window = Singularity:CreateWindow({
     Title = "Singularity",
-    Subtitle = "for Roblox",
-    Theme = "Reference",
-    LogoText = "Z",
+    Subtitle = "Singularity - Dark",
+    Theme = "Singularity",
+    LogoText = "S",
     NavigationTitle = "Combat",
-    FooterTitle = "Sub expires in 23d",
-    FooterText = "Session duration: 0:12",
-    Size = UDim2.fromOffset(988, 610),
+    FooterTitle = "Singularity - Dark",
+    FooterText = "RightShift to toggle",
+    Size = UDim2.fromOffset(760, 480),
+    Scale = 0.94,
     ToggleKey = Enum.KeyCode.RightShift
 })
 
 local Page = Window:Tab({
     Title = "Page",
-    Icon = "A",
+    Icon = "page",
     Segments = { "Combat", "Weapon", "FoV" }
 })
 
 local Settings = Window:Tab({
     Title = "Settings",
-    Icon = "S"
+    Icon = "settings"
 })
 
 local Aimbot = Page:Group({
     Title = "Aimbot",
-    Icon = "A",
-    Height = 440
+    Icon = "aimbot",
+    Height = 310
 })
 
 Aimbot:Toggle({
