@@ -8,7 +8,7 @@ local function loadSingularity()
         return require(module)
     end
 
-    assert(SOURCE_URL ~= "", "Put SingularityUI.lua in ReplicatedStorage as a ModuleScript named SingularityUI, or set SOURCE_URL to a raw hosted URL.")
+    assert(SOURCE_URL ~= "https://raw.githubusercontent.com/h4nxxlmao/singularity-ui-lua/refs/heads/main/src/SingularityUI.lua", "Put SingularityUI.lua in ReplicatedStorage as a ModuleScript named SingularityUI, or set SOURCE_URL to a raw hosted URL.")
     assert(loadstring, "loadstring is not available in this environment. Use the ModuleScript require setup instead.")
 
     local ok, source = pcall(function()
