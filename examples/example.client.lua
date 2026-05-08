@@ -1,4 +1,4 @@
-local SOURCE_URL = "https://raw.githubusercontent.com/h4nxxlmao/singularity-ui-lua/refs/heads/main/src/SingularityUI.lua" -- Optional: paste your raw SingularityUI.lua URL here.
+local SOURCE_URL = "https://raw.githubusercontent.com/h4nxxlmao/singularity-ui-lua/refs/heads/main/src/SingularityUI.lua"
 
 local function loadSingularity()
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -24,15 +24,18 @@ local function loadSingularity()
 end
 
 local Singularity = loadSingularity()
+Singularity.UseLucide = true
 
 local Window = Singularity:CreateWindow({
     Title = "Singularity",
     Subtitle = "Singularity - Dark",
     Theme = "Singularity",
-    LogoText = "S",
+    Logo = 77666858594516,
     NavigationTitle = "Combat",
-    FooterTitle = "Singularity - Dark",
-    FooterText = "RightShift to toggle",
+    SearchPlaceholder = "Search modules",
+    Profile = {
+        Enabled = true
+    },
     Size = UDim2.fromOffset(760, 480),
     Scale = 0.94,
     ToggleKey = Enum.KeyCode.RightShift
@@ -40,19 +43,21 @@ local Window = Singularity:CreateWindow({
 
 local Page = Window:Tab({
     Title = "Page",
-    Icon = "page",
+    Icon = "layout-dashboard",
     Segments = { "Combat", "Weapon", "FoV" }
 })
 
 local Settings = Window:Tab({
     Title = "Settings",
-    Icon = "settings"
+    Icon = "settings",
+    Segments = { "Config", "Theme", "Profile" }
 })
 
 local Aimbot = Page:Group({
     Title = "Aimbot",
-    Icon = "aimbot",
-    Height = 310
+    Icon = "crosshair",
+    Height = 310,
+    Segment = "Combat"
 })
 
 Aimbot:Toggle({
@@ -116,9 +121,64 @@ Aimbot:Input({
     Flag = "Text"
 })
 
-Settings:Section("Personalize")
+local Weapon = Page:Group({
+    Title = "Weapon",
+    Icon = "weapon",
+    Height = 180,
+    Segment = "Weapon"
+})
 
-Settings:Input({
+Weapon:Dropdown({
+    Title = "Weapon Mode",
+    Values = { "Primary", "Secondary", "Auto" },
+    Default = "Auto",
+    Flag = "WeaponMode"
+})
+
+Weapon:Slider({
+    Title = "Recoil",
+    Min = 0,
+    Max = 100,
+    Default = 25,
+    Suffix = "%",
+    Flag = "Recoil"
+})
+
+Weapon:Toggle({
+    Title = "Auto Reload",
+    Default = true,
+    Flag = "AutoReload"
+})
+
+local Fov = Page:Group({
+    Title = "FoV",
+    Icon = "scan",
+    Height = 150,
+    Segment = "FoV"
+})
+
+Fov:Slider({
+    Title = "Radius",
+    Min = 20,
+    Max = 300,
+    Default = 120,
+    Flag = "FovRadius"
+})
+
+Fov:Toggle({
+    Title = "Draw Circle",
+    Default = true,
+    Flag = "DrawFov"
+})
+
+local Config = Settings:Group({
+    Title = "Config",
+    Icon = "settings",
+    Height = 260,
+    Segment = "Config"
+})
+
+Config:Input({
     Title = "Username",
     Placeholder = "Name",
     Default = "Singularity",
@@ -128,7 +188,14 @@ Settings:Input({
     end
 })
 
-Settings:Keybind({
+Config:Dropdown({
+    Title = "Preset",
+    Values = { "Default", "Legit", "Rage" },
+    Default = "Default",
+    Flag = "Preset"
+})
+
+Config:Keybind({
     Title = "Action Key",
     Default = Enum.KeyCode.F,
     Callback = function()
@@ -140,10 +207,64 @@ Settings:Keybind({
     end
 })
 
-Settings:Colorpicker({
-    Title = "Accent Preview",
-    Default = Color3.fromRGB(91, 141, 255),
-    Callback = function(color)
-        print("Color:", color)
+Config:Toggle({
+    Title = "Notifications",
+    Default = true,
+    Flag = "Notifications"
+})
+
+Config:Button({
+    Title = "Save Config",
+    Callback = function()
+        Window:Notify({
+            Title = "Saved",
+            Content = "Config values stored in flags.",
+            Duration = 2
+        })
+    end
+})
+
+local ThemeGroup = Settings:Group({
+    Title = "Theme",
+    Icon = "palette",
+    Height = 150,
+    Segment = "Theme"
+})
+
+ThemeGroup:Toggle({
+    Title = "Acrylic",
+    Default = false,
+    Flag = "Acrylic"
+})
+
+ThemeGroup:Slider({
+    Title = "Scale",
+    Min = 80,
+    Max = 110,
+    Default = 94,
+    Suffix = "%",
+    Flag = "Scale"
+})
+
+local ProfileGroup = Settings:Group({
+    Title = "Profile",
+    Icon = "user",
+    Height = 150,
+    Segment = "Profile"
+})
+
+ProfileGroup:Paragraph({
+    Title = "Roblox Profile",
+    Content = "The sidebar card automatically uses your DisplayName, username, and headshot."
+})
+
+ProfileGroup:Button({
+    Title = "Show Profile Toast",
+    Callback = function()
+        Window:Notify({
+            Title = "Profile",
+            Content = "Roblox profile loaded.",
+            Duration = 2
+        })
     end
 })

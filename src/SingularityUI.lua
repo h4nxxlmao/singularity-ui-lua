@@ -19,9 +19,9 @@ local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
-local DEFAULT_TWEEN = TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-local SLOW_TWEEN = TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-local PRESS_TWEEN = TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local DEFAULT_TWEEN = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+local SLOW_TWEEN = TweenInfo.new(0.34, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+local PRESS_TWEEN = TweenInfo.new(0.09, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 
 local Window = {}
 Window.__index = Window
@@ -247,6 +247,39 @@ local function firstDefined(...)
     end
 
     return nil
+end
+
+local function setIconColor(icon, color)
+    if not icon then
+        return
+    end
+
+    if icon:IsA("UIStroke") then
+        icon.Color = color
+    end
+
+    if icon:IsA("ImageLabel") or icon:IsA("ImageButton") then
+        icon.ImageColor3 = color
+    elseif icon:IsA("TextLabel") or icon:IsA("TextButton") then
+        icon.TextColor3 = color
+    elseif icon:IsA("Frame") and icon.BackgroundTransparency < 1 then
+        icon.BackgroundColor3 = color
+    end
+
+    for _, child in ipairs(icon:GetChildren()) do
+        setIconColor(child, color)
+    end
+end
+
+local function searchableText(options, fallback)
+    options = normalizeOptions(options)
+
+    return string.lower(table.concat({
+        tostring(options.Title or options.Name or fallback or ""),
+        tostring(options.Desc or options.Description or options.Content or ""),
+        tostring(options.Flag or ""),
+        tostring(options.Placeholder or "")
+    }, " "))
 end
 
 local function optionTitle(option)
@@ -538,10 +571,16 @@ local function makeIcon(parent, icon, theme, size)
 
     size = size or 20
 
-    if typeof(icon) == "number" or tostring(icon):find("rbxassetid://") == 1 then
+    local iconString = tostring(icon)
+
+    if typeof(icon) == "number"
+        or iconString:find("rbxassetid://") == 1
+        or iconString:find("rbxthumb://") == 1
+        or iconString:find("http://") == 1
+        or iconString:find("https://") == 1 then
         return create("ImageLabel", {
             BackgroundTransparency = 1,
-            Image = typeof(icon) == "number" and ("rbxassetid://" .. tostring(icon)) or tostring(icon),
+            Image = typeof(icon) == "number" and ("rbxassetid://" .. tostring(icon)) or iconString,
             ImageColor3 = theme.Text,
             Size = UDim2.fromOffset(size, size),
             Parent = parent
@@ -620,24 +659,15 @@ function Singularity:Notify(options)
     addStroke(frame, theme.Stroke, 0.15)
     addPadding(frame, 14, 12, 14, 12)
 
-    local accent = create("Frame", {
-        BackgroundColor3 = theme.Accent,
-        BorderSizePixel = 0,
-        Size = UDim2.new(0, 2, 1, -22),
-        Position = UDim2.fromOffset(0, 11),
-        Parent = frame
-    })
-    addCorner(accent, 2)
-
     makeText(frame, options.Title or "Singularity", 13, theme.Text, Enum.Font.GothamMedium, {
-        Position = UDim2.fromOffset(10, 0),
-        Size = UDim2.new(1, -20, 0, 18)
+        Position = UDim2.fromOffset(0, 0),
+        Size = UDim2.new(1, 0, 0, 18)
     })
 
     if options.Content then
         makeText(frame, options.Content, 12, theme.Subtext, Enum.Font.Gotham, {
-            Position = UDim2.fromOffset(10, 22),
-            Size = UDim2.new(1, -20, 0, 30),
+            Position = UDim2.fromOffset(0, 22),
+            Size = UDim2.new(1, 0, 0, 30),
             TextWrapped = true,
             TextYAlignment = Enum.TextYAlignment.Top
         })
@@ -647,23 +677,28 @@ function Singularity:Notify(options)
         AnchorPoint = Vector2.new(0, 1),
         BackgroundColor3 = theme.Accent,
         BorderSizePixel = 0,
-        Position = UDim2.new(0, 10, 1, -8),
-        Size = UDim2.new(1, -20, 0, 1),
+        Position = UDim2.new(0, 0, 1, -8),
+        Size = UDim2.new(1, 0, 0, 1),
         Parent = frame
     })
     addCorner(progress, 1)
 
-    frame.Position = UDim2.fromOffset(20, 0)
-    tween(frame, { BackgroundTransparency = 0, Position = UDim2.fromOffset(0, 0) }, DEFAULT_TWEEN)
-    tween(progress, { Size = UDim2.new(0, 0, 0, 1) }, TweenInfo.new(duration, Enum.EasingStyle.Linear))
+    frame.Position = UDim2.fromOffset(16, -6)
+    frame.Size = UDim2.fromOffset(292, 0)
+    tween(frame, {
+        BackgroundTransparency = 0,
+        Position = UDim2.fromOffset(0, 0),
+        Size = UDim2.fromOffset(292, options.Content and 78 or 58)
+    }, SLOW_TWEEN)
+    tween(progress, { Size = UDim2.new(0, 0, 0, 1) }, TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out))
 
     task.delay(duration, function()
         if frame and frame.Parent then
             local closeTween = tween(frame, {
                 BackgroundTransparency = 1,
-                Position = UDim2.fromOffset(20, 0),
+                Position = UDim2.fromOffset(16, -6),
                 Size = UDim2.fromOffset(292, 0)
-            }, DEFAULT_TWEEN)
+            }, SLOW_TWEEN)
 
             closeTween.Completed:Wait()
 
@@ -774,6 +809,9 @@ function Window:_build()
     local logoImage = makeIcon(logo, options.Logo or 77666858594516, theme, 30)
     logoImage.AnchorPoint = Vector2.new(0.5, 0.5)
     logoImage.Position = UDim2.fromScale(0.5, 0.5)
+    if logoImage:IsA("ImageLabel") or logoImage:IsA("ImageButton") then
+        logoImage.ImageColor3 = Color3.new(1, 1, 1)
+    end
 
     local title = makeText(brandCard, options.Title or "Singularity", 15, theme.Text, Enum.Font.GothamMedium, {
         Position = UDim2.fromOffset(78, 20),
@@ -817,9 +855,29 @@ function Window:_build()
     addStroke(footer, theme.Stroke, 0.58)
 
     local profile = options.Profile or {}
+    local profileName = profile.Name
+    local profileRole = profile.Role
+    local profileAvatar = profile.Avatar
+
+    if profile.Enabled ~= false and LocalPlayer then
+        profileName = profileName or LocalPlayer.DisplayName or LocalPlayer.Name
+        profileRole = profileRole or ("@" .. LocalPlayer.Name)
+
+        if not profileAvatar then
+            local ok, thumbnail = pcall(function()
+                return Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+            end)
+
+            if ok then
+                profileAvatar = thumbnail
+            end
+        end
+    end
+
     local avatar = create("Frame", {
         BackgroundColor3 = theme.Input,
         BorderSizePixel = 0,
+        ClipsDescendants = true,
         Position = UDim2.fromOffset(12, 13),
         Size = UDim2.fromOffset(40, 40),
         Parent = footer
@@ -827,16 +885,20 @@ function Window:_build()
     addCorner(avatar, 10)
     addStroke(avatar, theme.Stroke, 0.42)
 
-    local avatarIcon = makeIcon(avatar, profile.Avatar or "user", theme, 22)
+    local avatarIcon = makeIcon(avatar, profileAvatar or "user", theme, profileAvatar and 40 or 22)
     avatarIcon.AnchorPoint = Vector2.new(0.5, 0.5)
     avatarIcon.Position = UDim2.fromScale(0.5, 0.5)
 
-    makeText(footer, profile.Name or options.FooterTitle or "User", 12, theme.Text, Enum.Font.GothamMedium, {
+    if profileAvatar and (avatarIcon:IsA("ImageLabel") or avatarIcon:IsA("ImageButton")) then
+        avatarIcon.ImageColor3 = Color3.new(1, 1, 1)
+    end
+
+    makeText(footer, profileName or options.FooterTitle or "User", 12, theme.Text, Enum.Font.GothamMedium, {
         Position = UDim2.fromOffset(62, 14),
         Size = UDim2.new(1, -78, 0, 18)
     })
 
-    makeText(footer, profile.Role or options.FooterText or "Singularity - Dark", 11, theme.Subtext, Enum.Font.Gotham, {
+    makeText(footer, profileRole or options.FooterText or "Singularity - Dark", 11, theme.Subtext, Enum.Font.Gotham, {
         Position = UDim2.fromOffset(62, 33),
         Size = UDim2.new(1, -78, 0, 16)
     })
@@ -895,36 +957,48 @@ function Window:_build()
         Parent = main
     })
 
-    local search = create("TextBox", {
+    local searchFrame = create("Frame", {
         AnchorPoint = Vector2.new(1, 0),
         BackgroundColor3 = theme.Input,
         BackgroundTransparency = 0.05,
+        BorderSizePixel = 0,
+        Position = UDim2.new(1, -82, 0, 14),
+        Size = UDim2.fromOffset(150, 24),
+        Parent = main
+    })
+    addCorner(searchFrame, 7)
+    addStroke(searchFrame, theme.Stroke, 0.55)
+
+    local searchIcon = makeIcon(searchFrame, "search", theme, 14)
+    searchIcon.Position = UDim2.fromOffset(8, 5)
+    setIconColor(searchIcon, theme.Muted)
+
+    local search = create("TextBox", {
+        BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ClearTextOnFocus = false,
         Font = Enum.Font.Gotham,
         PlaceholderText = options.SearchPlaceholder or "Search",
         PlaceholderColor3 = theme.Muted,
-        Position = UDim2.new(1, -82, 0, 14),
-        Size = UDim2.fromOffset(150, 24),
+        Position = UDim2.fromOffset(30, 0),
+        Size = UDim2.new(1, -38, 1, 0),
         Text = "",
         TextColor3 = theme.Text,
         TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = main
+        Parent = searchFrame
     })
-    addCorner(search, 7)
-    addStroke(search, theme.Stroke, 0.55)
-    addPadding(search, 28, 0, 10, 0)
-
-    local searchIcon = makeIcon(search, "search", theme, 14)
-    searchIcon.Position = UDim2.fromOffset(8, 5)
 
     search.Focused:Connect(function()
-        tween(search, { BackgroundColor3 = theme.SurfaceHover, Size = UDim2.fromOffset(180, 24) }, DEFAULT_TWEEN)
+        tween(searchFrame, { BackgroundColor3 = theme.SurfaceHover, Size = UDim2.fromOffset(180, 24) }, DEFAULT_TWEEN)
     end)
 
     search.FocusLost:Connect(function()
-        tween(search, { BackgroundColor3 = theme.Input, Size = UDim2.fromOffset(150, 24) }, DEFAULT_TWEEN)
+        tween(searchFrame, { BackgroundColor3 = theme.Input, Size = UDim2.fromOffset(150, 24) }, DEFAULT_TWEEN)
+    end)
+
+    search:GetPropertyChangedSignal("Text"):Connect(function()
+        self:_applySearch(search.Text)
     end)
 
     local actions = create("Frame", {
@@ -958,7 +1032,8 @@ function Window:_build()
     self.Topbar = dragHeader
     self.TitleLabel = title
     self.MinimizedTitle = minimizedTitle
-    self.SearchBox = search
+    self.SearchBox = searchFrame
+    self.SearchInput = search
     self.PageTitle = pageTitle
     self.SegmentHolder = segmentHolder
     self.TopbarLine = divider
@@ -1266,14 +1341,10 @@ function Window:_selectTab(targetTab)
         tab.Button.BackgroundColor3 = selected and self.Theme.SurfaceHover or self.Theme.Sidebar
         tab.TitleLabel.TextColor3 = selected and self.Theme.Text or self.Theme.Subtext
 
-        if tab.IconObject then
-            if tab.IconObject:IsA("ImageLabel") then
-                tab.IconObject.ImageColor3 = selected and self.Theme.Text or self.Theme.Subtext
-            else
-                tab.IconObject.TextColor3 = selected and self.Theme.Text or self.Theme.Subtext
-            end
-        end
+        setIconColor(tab.IconObject, selected and self.Theme.Text or self.Theme.Subtext)
     end
+
+    self:_applySearch(self.SearchInput and self.SearchInput.Text or "")
 end
 
 function Window:_renderSegments(tab)
@@ -1324,9 +1395,43 @@ function Window:_renderSegments(tab)
             press(button, button.Size)
             tab.ActiveSegment = label
             self:_renderSegments(tab)
+            self:_applySearch(self.SearchInput and self.SearchInput.Text or "")
             safeCall(tab.SegmentCallback, label)
         end)
     end
+end
+
+function Window:_filterControls(controls, query, segment)
+    local anyVisible = false
+
+    for _, control in ipairs(controls or {}) do
+        local matchesSearch = query == "" or string.find(control.SearchText or "", query, 1, true) ~= nil
+        local matchesSegment = not control.Segment or not segment or control.Segment == segment
+        local visible = matchesSearch and matchesSegment
+
+        if control.ChildrenControls then
+            local childVisible = self:_filterControls(control.ChildrenControls, matchesSearch and "" or query, segment)
+            visible = (matchesSearch and matchesSegment) or childVisible
+        end
+
+        if control.Frame then
+            control.Frame.Visible = visible
+        end
+
+        anyVisible = anyVisible or visible
+    end
+
+    return anyVisible
+end
+
+function Window:_applySearch(query)
+    query = string.lower(tostring(query or ""))
+
+    if not self.ActiveTab then
+        return
+    end
+
+    self:_filterControls(self.ActiveTab.Controls, query, self.ActiveTab.ActiveSegment)
 end
 
 function Tab:_build()
@@ -1405,6 +1510,12 @@ function Tab:Select()
     self.Window:_selectTab(self)
 end
 
+function Tab:_refreshSearch()
+    if self.Window and self.Window.ActiveTab then
+        self.Window:_applySearch(self.Window.SearchInput and self.Window.SearchInput.Text or "")
+    end
+end
+
 function Tab:_base(options, height)
     options = normalizeOptions(options)
 
@@ -1445,10 +1556,13 @@ function Tab:_base(options, height)
         Frame = frame,
         Title = title,
         Desc = desc,
-        Options = options
+        Options = options,
+        SearchText = searchableText(options),
+        Segment = options.Segment or self.ActiveSegment
     }, Control)
 
     table.insert(self.Controls, control)
+    self:_refreshSearch()
     return control
 end
 
@@ -1496,11 +1610,21 @@ function Tab:Group(options)
         Page = content,
         Controls = {},
         IsGroup = true,
-        Frame = frame
+        Frame = frame,
+        SearchText = searchableText(options, "Group"),
+        Segment = options.Segment or self.ActiveSegment
     }, {
         __index = Tab
     })
 
+    table.insert(self.Controls, {
+        Frame = frame,
+        SearchText = group.SearchText,
+        Segment = group.Segment,
+        ChildrenControls = group.Controls
+    })
+
+    self:_refreshSearch()
     return group
 end
 
@@ -1511,6 +1635,14 @@ function Tab:Section(title)
         Size = UDim2.new(1, 0, 0, 24)
     })
     label.Text = string.upper(label.Text)
+
+    table.insert(self.Controls, {
+        Frame = label,
+        SearchText = string.lower(tostring(title or "Section")),
+        Segment = self.ActiveSegment
+    })
+
+    self:_refreshSearch()
 
     return label
 end
@@ -1576,10 +1708,13 @@ function Tab:Button(options)
             Window = self.Window,
             Frame = row,
             Button = button,
-            Options = options
+            Options = options,
+            SearchText = searchableText(options),
+            Segment = options.Segment or self.ActiveSegment
         }, Control)
 
         table.insert(self.Controls, control)
+        self:_refreshSearch()
         return control
     end
 
@@ -1851,7 +1986,9 @@ function Tab:Input(options)
             Frame = row,
             Box = box,
             Value = value,
-            Options = options
+            Options = options,
+            SearchText = searchableText(options),
+            Segment = options.Segment or self.ActiveSegment
         }, Control)
 
         local function apply(nextValue, silent)
@@ -1879,6 +2016,7 @@ function Tab:Input(options)
         end)
 
         apply(value, true)
+        self:_refreshSearch()
         return control
     end
 
