@@ -61,6 +61,50 @@ Singularity.Themes.Singularity = Singularity.Themes.Dark
 Singularity.Themes.SingularityDark = Singularity.Themes.Dark
 Singularity.Themes.Reference = Singularity.Themes.Dark
 
+Singularity.Icons = {
+    alert = "rbxassetid://73186275216515",
+    bag = "rbxassetid://8601111810",
+    boss = "rbxassetid://13132186360",
+    cart = "rbxassetid://128874923961846",
+    compas = "rbxassetid://125300760963399",
+    crosshair = "rbxassetid://12614416478",
+    dcs = "rbxassetid://15310731934",
+    discord = "rbxassetid://94434236999817",
+    eyes = "rbxassetid://14321059114",
+    fish = "rbxassetid://97167558235554",
+    folder = "rbxassetid://111411260968321",
+    gamepad = "rbxassetid://84173963561612",
+    gps = "rbxassetid://17824309485",
+    idea = "rbxassetid://16833255748",
+    loop = "rbxassetid://122032243989747",
+    menu = "rbxassetid://6340513838",
+    next = "rbxassetid://12662718374",
+    notify = "rbxassetid://70884221600423",
+    payment = "rbxassetid://18747025078",
+    player = "rbxassetid://12120698352",
+    plug = "rbxassetid://137601480983962",
+    question = "rbxassetid://17510196486",
+    rod = "rbxassetid://103247953194129",
+    scan = "rbxassetid://109869955247116",
+    scroll = "rbxassetid://114127804740858",
+    settings = "rbxassetid://70386228443175",
+    shop = "rbxassetid://4985385964",
+    skeleton = "rbxassetid://17313330026",
+    star = "rbxassetid://107005941750079",
+    start = "rbxassetid://108886429866687",
+    stat = "rbxassetid://12094445329",
+    strom = "rbxassetid://13321880293",
+    sword = "rbxassetid://82472368671405",
+    sword1 = "rbxassetid://109643735374029",
+    user = "rbxassetid://108483430622128",
+    water = "rbxassetid://100076212630732",
+    web = "rbxassetid://137601480983962"
+}
+
+Singularity.IconPacks = {
+    default = Singularity.Icons
+}
+
 local function copy(source)
     local target = {}
 
@@ -85,6 +129,39 @@ local function resolveTheme(theme)
     end
 
     return base
+end
+
+function Singularity:RegisterIcons(packName, icons)
+    if typeof(packName) == "table" and icons == nil then
+        icons = packName
+        packName = "default"
+    end
+
+    if typeof(icons) ~= "table" then
+        warn("[Singularity UI] RegisterIcons expected an icon table")
+        return nil
+    end
+
+    local normalizedName = string.lower(tostring(packName or "default"))
+    local aliases = {}
+
+    for name, image in pairs(icons) do
+        if typeof(name) == "string" then
+            aliases[string.lower(name)] = image
+        end
+    end
+
+    for name, image in pairs(aliases) do
+        icons[name] = image
+    end
+
+    self.IconPacks[normalizedName] = icons
+
+    if normalizedName == "default" then
+        self.Icons = icons
+    end
+
+    return icons
 end
 
 local function tween(instance, properties, info)
@@ -378,6 +455,49 @@ local function assetImage(id)
     return "rbxassetid://" .. text
 end
 
+local function makeAssetIcon(parent, image, theme, size)
+    return create("ImageLabel", {
+        BackgroundTransparency = 1,
+        Image = assetImage(image),
+        ImageColor3 = theme.Text,
+        Size = UDim2.fromOffset(size, size),
+        Parent = parent
+    })
+end
+
+local function lookupIconInPack(pack, key)
+    if typeof(pack) ~= "table" then
+        return nil
+    end
+
+    return pack[key] or pack[string.lower(key)]
+end
+
+local function lookupRegisteredIcon(icon)
+    local key = string.lower(tostring(icon))
+    local packName, packKey = key:match("^([%w_%-]+):(.+)$")
+
+    if packName and packKey then
+        return lookupIconInPack(Singularity.IconPacks[packName], packKey)
+    end
+
+    local direct = lookupIconInPack(Singularity.Icons, key)
+
+    if direct then
+        return direct
+    end
+
+    for _, pack in pairs(Singularity.IconPacks) do
+        local image = lookupIconInPack(pack, key)
+
+        if image then
+            return image
+        end
+    end
+
+    return nil
+end
+
 local function makeLucideImage(parent, icon, theme, size)
     local icons = getLucideIcons()
 
@@ -386,9 +506,16 @@ local function makeLucideImage(parent, icon, theme, size)
     end
 
     local iconData = nil
-    local ok = pcall(function()
-        iconData = icons.Icon2(tostring(icon), "lucide")
-    end)
+    local ok = false
+
+    if typeof(icons.Icon2) == "function" then
+        ok = pcall(function()
+            iconData = icons.Icon2(tostring(icon), "lucide")
+        end)
+    else
+        ok = true
+        iconData = lookupIconInPack(icons, tostring(icon))
+    end
 
     if not ok or not iconData then
         return nil
@@ -589,13 +716,13 @@ local function makeIcon(parent, icon, theme, size)
         or iconString:find("rbxthumb://") == 1
         or iconString:find("http://") == 1
         or iconString:find("https://") == 1 then
-        return create("ImageLabel", {
-            BackgroundTransparency = 1,
-            Image = assetImage(icon),
-            ImageColor3 = theme.Text,
-            Size = UDim2.fromOffset(size, size),
-            Parent = parent
-        })
+        return makeAssetIcon(parent, icon, theme, size)
+    end
+
+    local registeredIcon = lookupRegisteredIcon(icon)
+
+    if registeredIcon then
+        return makeAssetIcon(parent, registeredIcon, theme, size)
     end
 
     local lucideIcon = makeLucideImage(parent, icon, theme, size)

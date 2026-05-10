@@ -5,6 +5,9 @@ A custom Roblox Luau UI library with a compact black-and-white Singularity Dark 
 ## Files
 
 - `src/SingularityUI.lua` - the self-contained UI library.
+- `src/icons/defaulticons.lua` - small built-in-style asset icon map.
+- `src/icons/lucideIcons.lua` - optional Lucide asset icon map.
+- `src/icons/solarIcons.lua` - optional Solar asset icon map.
 - `examples/example.client.lua` - a drop-in Roblox client example.
 
 ## Quick Start
@@ -101,7 +104,19 @@ Most controls accept:
 }
 ```
 
-String icons use Footagesus/Icons Lucide spritesheets when `loadstring` + `HttpGet` are available, so names like `"door-open"`, `"settings"`, `"search"`, `"user"`, `"crosshair"`, and other Lucide names work. If the icon loader cannot fetch, Singularity falls back to small built-in line icons for common names. Roblox image asset ids such as `123456789` / `"rbxassetid://123456789"` also work.
+String icons first check registered icon maps, then use Footagesus/Icons Lucide spritesheets when `loadstring` + `HttpGet` are available. If the icon loader cannot fetch, Singularity falls back to small built-in line icons for common names. Roblox image asset ids such as `123456789` / `"rbxassetid://123456789"` also work.
+
+Optional no-network icon packs:
+
+```lua
+Singularity:RegisterIcons("lucide", require(script.Parent.icons.lucideIcons))
+Singularity:RegisterIcons("solar", require(script.Parent.icons.solarIcons))
+
+Window:Tab({
+    Title = "Combat",
+    Icon = "lucide:crosshair"
+})
+```
 
 To disable external Lucide loading:
 
