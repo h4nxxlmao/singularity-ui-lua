@@ -33,8 +33,6 @@ local Window = Singularity:CreateWindow({
     Logo = 77666858594516,
     NavigationTitle = "Combat",
     SearchPlaceholder = "Search modules",
-    Acrylic = true,
-    BlurSize = 14,
     Profile = {
         Enabled = true
     },
@@ -229,14 +227,8 @@ Config:Button({
 local ThemeGroup = Settings:Group({
     Title = "Theme",
     Icon = "palette",
-    Height = 150,
+    Height = 110,
     Segment = "Theme"
-})
-
-ThemeGroup:Toggle({
-    Title = "Acrylic",
-    Default = false,
-    Flag = "Acrylic"
 })
 
 ThemeGroup:Slider({

@@ -24,8 +24,6 @@ local Window = Singularity:CreateWindow({
     Profile = {
         Enabled = true
     },
-    Acrylic = true,
-    BlurSize = 14,
     Size = UDim2.fromOffset(760, 480),
     Scale = 0.94,
     ToggleKey = Enum.KeyCode.RightShift
@@ -104,7 +102,7 @@ Most controls accept:
 }
 ```
 
-String icons first check registered icon maps, then use Footagesus/Icons Lucide spritesheets when `loadstring` + `HttpGet` are available. If the icon loader cannot fetch, Singularity falls back to small built-in line icons for common names. Roblox image asset ids such as `123456789` / `"rbxassetid://123456789"` also work.
+String icons first check registered icon maps, then use Footagesus/Icons Lucide spritesheets when `loadstring` + `HttpGet` are available. If the icon loader cannot fetch, Singularity falls back to small built-in line icons for common names. Roblox image asset ids such as `123456789` / `"rbxassetid://123456789"` also work. The default logo is `77666858594516`; pass `Logo = false` to use the text fallback instead.
 
 Optional no-network icon packs:
 

@@ -17,12 +17,12 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
-local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
 local DEFAULT_TWEEN = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 local SLOW_TWEEN = TweenInfo.new(0.34, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 local PRESS_TWEEN = TweenInfo.new(0.09, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+local DEFAULT_LOGO = 77666858594516
 
 local Window = {}
 Window.__index = Window
@@ -880,22 +880,65 @@ function Singularity:CreateWindow(options)
     return window
 end
 
+local function getViewportSize()
+    local camera = workspace.CurrentCamera
+
+    if camera then
+        return camera.ViewportSize
+    end
+
+    return Vector2.new(1280, 720)
+end
+
+local function resolveWindowSize(options)
+    local viewport = getViewportSize()
+    local margin = options.ScreenMargin or (viewport.X <= 620 and 10 or 28)
+    local requested = options.Size or UDim2.fromOffset(760, 480)
+    local requestedWidth = requested.X.Offset
+    local requestedHeight = requested.Y.Offset
+
+    if requestedWidth <= 0 then
+        requestedWidth = viewport.X * (requested.X.Scale > 0 and requested.X.Scale or 0.82)
+    end
+
+    if requestedHeight <= 0 then
+        requestedHeight = viewport.Y * (requested.Y.Scale > 0 and requested.Y.Scale or 0.72)
+    end
+
+    local maxWidth = math.max(300, viewport.X - (margin * 2))
+    local maxHeight = math.max(300, viewport.Y - (margin * 2))
+    local constraintMaxWidth = math.min(options.MaxWidth or 980, maxWidth)
+    local constraintMaxHeight = math.min(options.MaxHeight or 680, maxHeight)
+    local constraintMinWidth = math.min(options.MinWidth or 560, constraintMaxWidth)
+    local constraintMinHeight = math.min(options.MinHeight or 360, constraintMaxHeight)
+    local width = math.clamp(requestedWidth, constraintMinWidth, constraintMaxWidth)
+    local height = math.clamp(requestedHeight, constraintMinHeight, constraintMaxHeight)
+
+    return UDim2.fromOffset(width, height),
+        Vector2.new(constraintMinWidth, constraintMinHeight),
+        Vector2.new(constraintMaxWidth, constraintMaxHeight)
+end
+
+local function resolveSidebarWidth(options, windowSize)
+    if options.SidebarWidth then
+        return math.min(options.SidebarWidth, math.max(150, windowSize.X.Offset - 210))
+    end
+
+    if windowSize.X.Offset <= 430 then
+        return 150
+    elseif windowSize.X.Offset <= 560 then
+        return 180
+    end
+
+    return 230
+end
+
 function Window:_build()
     local options = self.Options
     local theme = self.Theme
-    local size = options.Size or UDim2.fromOffset(760, 480)
-    local sidebarWidth = options.SidebarWidth or 230
+    local size, minSize, maxSize = resolveWindowSize(options)
+    local sidebarWidth = resolveSidebarWidth(options, size)
     local scale = options.Scale or 0.94
-
-    local blur = nil
-
-    if options.Acrylic ~= false then
-        blur = create("BlurEffect", {
-            Name = "SingularityAcrylic",
-            Size = 0,
-            Parent = Lighting
-        })
-    end
 
     local screenGui = create("ScreenGui", {
         Name = options.Name or "SingularityUI",
@@ -927,8 +970,8 @@ function Window:_build()
     })
 
     local sizeConstraint = create("UISizeConstraint", {
-        MinSize = Vector2.new(560, 360),
-        MaxSize = Vector2.new(980, 680),
+        MinSize = minSize,
+        MaxSize = maxSize,
         Parent = main
     })
 
@@ -959,17 +1002,37 @@ function Window:_build()
     addCorner(logo, 11)
     addStroke(logo, theme.Stroke, 0.72)
 
-    local logoId = options.Logo or 77666858594516
-    local logoImage = create("ImageLabel", {
-        BackgroundTransparency = 1,
-        Image = assetImage(logoId),
-        ImageColor3 = Color3.new(1, 1, 1),
-        ScaleType = Enum.ScaleType.Fit,
-        Size = UDim2.fromOffset(32, 32),
-        Parent = logo
-    })
-    logoImage.AnchorPoint = Vector2.new(0.5, 0.5)
-    logoImage.Position = UDim2.fromScale(0.5, 0.5)
+    local logoId = firstDefined(options.Logo, DEFAULT_LOGO)
+
+    if logoId ~= false then
+        local logoImage = create("ImageLabel", {
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            BackgroundTransparency = 1,
+            Image = assetImage(logoId),
+            ImageColor3 = Color3.new(1, 1, 1),
+            Position = UDim2.fromScale(0.5, 0.5),
+            ScaleType = Enum.ScaleType.Fit,
+            Size = UDim2.fromOffset(32, 32),
+            Parent = logo
+        })
+
+        self.LogoImage = logoImage
+
+        task.delay(2, function()
+            if logoImage and logoImage.Parent and not logoImage.IsLoaded then
+                logoImage.Visible = false
+                makeText(logo, "S", 22, theme.Text, Enum.Font.GothamBold, {
+                    Size = UDim2.fromScale(1, 1),
+                    TextXAlignment = Enum.TextXAlignment.Center
+                })
+            end
+        end)
+    else
+        makeText(logo, "S", 22, theme.Text, Enum.Font.GothamBold, {
+            Size = UDim2.fromScale(1, 1),
+            TextXAlignment = Enum.TextXAlignment.Center
+        })
+    end
 
     local title = makeText(brandCard, options.Title or "Singularity", 15, theme.Text, Enum.Font.GothamMedium, {
         Position = UDim2.fromOffset(78, 20),
@@ -1185,7 +1248,6 @@ function Window:_build()
     minimizedTitle.Visible = false
 
     self.ScreenGui = screenGui
-    self.Blur = blur
     self.Main = main
     self.UIScale = uiScale
     self.Topbar = dragHeader
@@ -1205,11 +1267,13 @@ function Window:_build()
     self.ContentShell = contentShell
     self.Content = pageHolder
     self.OriginalSize = size
-    self.MinimizedSize = UDim2.new(size.X.Scale, size.X.Offset, 0, 54)
+    self.MinimizedSize = UDim2.fromOffset(size.X.Offset, 54)
+    self.UserResized = false
 
     self:_makeDraggable(brandCard)
     self:_makeDraggable(dragHeader)
     self:_makeResizable()
+    self:_watchViewportSize()
 
     minimize.MouseButton1Click:Connect(function()
         self:SetMinimized(not self._minimized)
@@ -1238,11 +1302,66 @@ function Window:_build()
         BackgroundTransparency = options.Acrylic ~= false and 0.08 or 0,
         Size = size
     }, SLOW_TWEEN)
+end
 
-    if blur then
-        tween(blur, { Size = options.BlurSize or 14 }, SLOW_TWEEN)
+function Window:_updateResponsiveSize(animated)
+    local defaultSize, minSize, maxSize = resolveWindowSize(self.Options)
+    local preferredSize = self.UserResized and self.OriginalSize or defaultSize
+    local size = UDim2.fromOffset(
+        math.clamp(preferredSize.X.Offset, minSize.X, maxSize.X),
+        math.clamp(preferredSize.Y.Offset, minSize.Y, maxSize.Y)
+    )
+    local sidebarWidth = resolveSidebarWidth(self.Options, size)
+
+    self.OriginalSize = size
+    self.MinimizedSize = UDim2.fromOffset(size.X.Offset, 54)
+
+    if self.SizeConstraint then
+        self.SizeConstraint.MinSize = self._minimized and Vector2.new(minSize.X, 54) or minSize
+        self.SizeConstraint.MaxSize = maxSize
+    end
+
+    if self.Sidebar then
+        self.Sidebar.Size = UDim2.new(0, sidebarWidth, 1, -24)
+    end
+
+    if self.SidebarLine then
+        self.SidebarLine.Position = UDim2.fromOffset(sidebarWidth + 20, 14)
+    end
+
+    if self.ContentShell then
+        self.ContentShell.Position = UDim2.fromOffset(sidebarWidth + 28, 0)
+        self.ContentShell.Size = UDim2.new(1, -sidebarWidth - 38, 1, 0)
+    end
+
+    if self.Topbar then
+        self.Topbar.Position = UDim2.fromOffset(sidebarWidth + 20, 0)
+        self.Topbar.Size = UDim2.new(1, -sidebarWidth - 20, 0, 58)
+    end
+
+    local targetSize = self._minimized and self.MinimizedSize or self.OriginalSize
+
+    if self.Main then
+        if animated then
+            tween(self.Main, { Size = targetSize }, DEFAULT_TWEEN)
+        else
+            self.Main.Size = targetSize
+        end
     end
 end
+
+function Window:_watchViewportSize()
+    local camera = workspace.CurrentCamera
+
+    if not camera then
+        return
+    end
+
+    table.insert(self._connections, camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+        self:_updateResponsiveSize(true)
+    end))
+end
+
 function Window:_topButton(parent, text, textColor)
     local button = create("TextButton", {
         AutoButtonColor = false,
@@ -1407,12 +1526,14 @@ function Window:_makeResizable()
         local rawDelta = input.Position - dragStart
         local scale = self.UIScale and self.UIScale.Scale or 1
         local delta = Vector2.new(rawDelta.X / scale, rawDelta.Y / scale)
-        local minSize = self.SizeConstraint and self.SizeConstraint.MinSize or Vector2.new(560, 360)
+        local minSize = self.SizeConstraint and self.SizeConstraint.MinSize or Vector2.new(320, 300)
         local maxSize = self.SizeConstraint and self.SizeConstraint.MaxSize or Vector2.new(980, 680)
         local width = math.clamp(startSize.X.Offset + delta.X, minSize.X, maxSize.X)
         local height = math.clamp(startSize.Y.Offset + delta.Y, minSize.Y, maxSize.Y)
 
         self.OriginalSize = UDim2.fromOffset(width, height)
+        self.MinimizedSize = UDim2.fromOffset(width, 54)
+        self.UserResized = true
         self.Main.Size = self.OriginalSize
     end))
 end
@@ -1428,9 +1549,7 @@ function Window:SetMinimized(value)
         self.ResizeHandle.Visible = not value
     end
 
-    if self.SizeConstraint then
-        self.SizeConstraint.MinSize = value and Vector2.new(560, 54) or Vector2.new(560, 360)
-    end
+    self:_updateResponsiveSize(false)
 
     tween(self.Main, {
         Size = value and self.MinimizedSize or self.OriginalSize
@@ -1448,9 +1567,6 @@ function Window:Destroy()
         self.ScreenGui:Destroy()
     end
 
-    if self.Blur then
-        self.Blur:Destroy()
-    end
 end
 
 function Window:Notify(options)
