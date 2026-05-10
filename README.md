@@ -25,7 +25,6 @@ local Window = Singularity:CreateWindow({
         Enabled = true
     },
     Size = UDim2.fromOffset(760, 480),
-    Scale = 0.94,
     ToggleKey = Enum.KeyCode.RightShift
 })
 
@@ -123,6 +122,8 @@ Singularity.UseLucide = false
 ```
 
 The sidebar profile card loads the local Roblox profile by default when `Profile.Enabled` is not `false`: DisplayName, `@username`, and headshot avatar.
+
+Touch devices use a smaller automatic scale by default. Override it with `MobileScale = 0.72`, or pass `Scale = 0.94` to force one scale everywhere.
 
 The top search box filters the active page by group/control title, description, flag, and placeholder text.
 

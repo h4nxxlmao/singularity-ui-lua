@@ -455,6 +455,20 @@ local function assetImage(id)
     return "rbxassetid://" .. text
 end
 
+local function assetThumbnail(id)
+    local text = tostring(id)
+
+    if text:find("rbxassetid://") == 1 then
+        text = text:gsub("rbxassetid://", "")
+    end
+
+    if text:match("^%d+$") then
+        return ("rbxthumb://type=Asset&id=%s&w=150&h=150"):format(text)
+    end
+
+    return assetImage(id)
+end
+
 local function makeAssetIcon(parent, image, theme, size)
     return create("ImageLabel", {
         BackgroundTransparency = 1,
@@ -933,12 +947,24 @@ local function resolveSidebarWidth(options, windowSize)
     return 230
 end
 
+local function resolveScale(options)
+    if options.Scale ~= nil then
+        return options.Scale
+    end
+
+    if UserInputService.TouchEnabled then
+        return options.MobileScale or 0.72
+    end
+
+    return 0.94
+end
+
 function Window:_build()
     local options = self.Options
     local theme = self.Theme
     local size, minSize, maxSize = resolveWindowSize(options)
     local sidebarWidth = resolveSidebarWidth(options, size)
-    local scale = options.Scale or 0.94
+    local scale = resolveScale(options)
 
     local screenGui = create("ScreenGui", {
         Name = options.Name or "SingularityUI",
@@ -1005,10 +1031,15 @@ function Window:_build()
     local logoId = firstDefined(options.Logo, DEFAULT_LOGO)
 
     if logoId ~= false then
+        local fallbackLogo = makeText(logo, "S", 22, theme.Text, Enum.Font.GothamBold, {
+            Size = UDim2.fromScale(1, 1),
+            TextXAlignment = Enum.TextXAlignment.Center
+        })
+
         local logoImage = create("ImageLabel", {
             AnchorPoint = Vector2.new(0.5, 0.5),
             BackgroundTransparency = 1,
-            Image = assetImage(logoId),
+            Image = assetThumbnail(logoId),
             ImageColor3 = Color3.new(1, 1, 1),
             Position = UDim2.fromScale(0.5, 0.5),
             ScaleType = Enum.ScaleType.Fit,
@@ -1018,15 +1049,15 @@ function Window:_build()
 
         self.LogoImage = logoImage
 
-        task.delay(2, function()
-            if logoImage and logoImage.Parent and not logoImage.IsLoaded then
-                logoImage.Visible = false
-                makeText(logo, "S", 22, theme.Text, Enum.Font.GothamBold, {
-                    Size = UDim2.fromScale(1, 1),
-                    TextXAlignment = Enum.TextXAlignment.Center
-                })
+        logoImage:GetPropertyChangedSignal("IsLoaded"):Connect(function()
+            if logoImage.IsLoaded and fallbackLogo then
+                fallbackLogo.Visible = false
             end
         end)
+
+        if logoImage.IsLoaded then
+            fallbackLogo.Visible = false
+        end
     else
         makeText(logo, "S", 22, theme.Text, Enum.Font.GothamBold, {
             Size = UDim2.fromScale(1, 1),
@@ -1890,10 +1921,15 @@ function Tab:Group(options)
         Size = UDim2.new(1, -60, 0, 24)
     })
 
-    local content = create("Frame", {
+    local content = create("ScrollingFrame", {
+        Active = true,
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
+        CanvasSize = UDim2.fromScale(0, 0),
         Position = UDim2.fromOffset(0, 44),
+        ScrollBarImageColor3 = theme.Accent,
+        ScrollBarThickness = 3,
         Size = UDim2.new(1, 0, 1, -52),
         Parent = frame
     })
