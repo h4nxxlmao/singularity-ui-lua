@@ -1207,13 +1207,20 @@ function Window:_build()
         Size = UDim2.new(1, -4, 0, 18)
     })
 
-    local tabHolder = create("Frame", {
+    local tabHolder = create("ScrollingFrame", {
+        Active = true,
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
+        CanvasSize = UDim2.fromScale(0, 0),
         Position = UDim2.fromOffset(0, 88),
+        ScrollBarImageColor3 = theme.Accent,
+        ScrollBarThickness = 3,
+        ScrollingDirection = Enum.ScrollingDirection.Y,
         Size = UDim2.new(1, 0, 1, -148),
         Parent = sidebar
     })
+    addPadding(tabHolder, 0, 0, 4, 0)
 
     create("UIListLayout", {
         FillDirection = Enum.FillDirection.Vertical,
@@ -1304,10 +1311,16 @@ function Window:_build()
         Size = UDim2.new(1, -82, 0, 24)
     })
 
-    local segmentHolder = create("Frame", {
+    local segmentHolder = create("ScrollingFrame", {
+        Active = true,
+        AutomaticCanvasSize = Enum.AutomaticSize.X,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
+        CanvasSize = UDim2.fromScale(0, 0),
         Position = UDim2.fromOffset(14, 50),
+        ScrollBarImageColor3 = theme.Accent,
+        ScrollBarThickness = 0,
+        ScrollingDirection = Enum.ScrollingDirection.X,
         Size = UDim2.new(1, -28, 0, 30),
         Parent = contentShell
     })
