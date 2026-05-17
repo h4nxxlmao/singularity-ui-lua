@@ -463,11 +463,9 @@ local function decalTexture(id)
         return nil
     end
 
-    if DecalTextureCache[assetId] ~= nil then
-        return DecalTextureCache[assetId] or nil
+    if DecalTextureCache[assetId] then
+        return DecalTextureCache[assetId]
     end
-
-    DecalTextureCache[assetId] = false
 
     local ok, objects = pcall(function()
         return game:GetObjects("rbxassetid://" .. assetId)
@@ -524,14 +522,39 @@ local function assetImage(id)
     return "rbxassetid://" .. text
 end
 
+local function setAssetImage(imageLabel, image, fallback)
+    imageLabel.Image = assetImage(image)
+
+    if fallback then
+        fallback.Visible = false
+    end
+
+    local assetId = normalizedAssetId(image)
+
+    if not assetId then
+        return
+    end
+
+    task.spawn(function()
+        local texture = decalTexture(assetId)
+
+        if texture and imageLabel and imageLabel.Parent then
+            imageLabel.Image = texture
+        end
+    end)
+end
+
 local function makeAssetIcon(parent, image, theme, size)
-    return create("ImageLabel", {
+    local icon = create("ImageLabel", {
         BackgroundTransparency = 1,
-        Image = assetImage(image),
         ImageColor3 = theme.Text,
         Size = UDim2.fromOffset(size, size),
         Parent = parent
     })
+
+    setAssetImage(icon, image)
+
+    return icon
 end
 
 local function lookupIconInPack(pack, key)
@@ -1109,7 +1132,6 @@ function Window:_build()
         local logoImage = create("ImageLabel", {
             AnchorPoint = Vector2.new(0.5, 0.5),
             BackgroundTransparency = 1,
-            Image = assetImage(logoId),
             ImageColor3 = Color3.new(1, 1, 1),
             Position = UDim2.fromScale(0.5, 0.5),
             ScaleType = Enum.ScaleType.Fit,
@@ -1118,6 +1140,7 @@ function Window:_build()
         })
 
         self.LogoImage = logoImage
+        setAssetImage(logoImage, logoId, fallbackLogo)
 
         logoImage:GetPropertyChangedSignal("IsLoaded"):Connect(function()
             if logoImage.IsLoaded and fallbackLogo then
@@ -1363,13 +1386,13 @@ function Window:_build()
         local miniLogoImage = create("ImageLabel", {
             AnchorPoint = Vector2.new(0.5, 0.5),
             BackgroundTransparency = 1,
-            Image = assetImage(logoId),
             ImageColor3 = Color3.new(1, 1, 1),
             Position = UDim2.fromScale(0.5, 0.5),
             ScaleType = Enum.ScaleType.Fit,
             Size = UDim2.fromOffset(22, 22),
             Parent = minimizedLogo
         })
+        setAssetImage(miniLogoImage, logoId, miniFallback)
 
         miniLogoImage:GetPropertyChangedSignal("IsLoaded"):Connect(function()
             if miniLogoImage.IsLoaded and miniFallback then
