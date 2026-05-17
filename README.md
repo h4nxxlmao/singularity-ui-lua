@@ -1,6 +1,6 @@
 # Singularity UI Lua
 
-A custom Roblox Luau UI library with a compact Singularity style: draggable/resizable responsive window, logo brand rail, desktop search, mobile-friendly compact navigation, segmented page tabs, grouped controls, slider toggles, flags, keybinds, animations, and minimalist toast notifications.
+A custom Roblox Luau UI library with a tight white Singularity style: draggable/resizable responsive window, logo brand rail, desktop search, mobile-friendly compact navigation, segmented page tabs, grouped controls, slider toggles, flags, keybinds, animations, and minimalist toast notifications.
 
 ## Files
 
@@ -19,13 +19,13 @@ local Window = Singularity:CreateWindow({
     Title = "Singularity",
     Subtitle = "Singularity",
     Theme = "Singularity",
-    Logo = 77666858594516,
+    Logo = 73636428262287,
     SearchPlaceholder = "Search modules",
     Profile = {
         Enabled = true
     },
-    Size = UDim2.fromOffset(760, 480),
-    MinimizedWidth = 118,
+    Size = UDim2.fromOffset(700, 430),
+    MinimizedWidth = 104,
     ToggleKey = Enum.KeyCode.RightShift
 })
 
@@ -102,7 +102,7 @@ Most controls accept:
 }
 ```
 
-String icons first check registered icon maps, then use Footagesus/Icons Lucide spritesheets when `loadstring` + `HttpGet` are available. If the icon loader cannot fetch, Singularity falls back to small built-in line icons for common names. Roblox image asset ids such as `123456789` / `"rbxassetid://123456789"` also work. The default logo is `77666858594516`; pass `Logo = false` to use the text fallback instead.
+String icons first check registered icon maps, then use Footagesus/Icons Lucide spritesheets when `loadstring` + `HttpGet` are available. If the icon loader cannot fetch, Singularity falls back to small built-in line icons for common names. Roblox image and decal asset ids such as `123456789` / `"rbxassetid://123456789"` also work. Decal ids are resolved through their real `Texture` value before being assigned to an `ImageLabel`. The default logo is `73636428262287`; pass `Logo = false` to use the text fallback instead.
 
 Optional no-network icon packs:
 
@@ -124,7 +124,7 @@ Singularity.UseLucide = false
 
 The sidebar profile card loads the local Roblox profile by default when `Profile.Enabled` is not `false`: DisplayName, `@username`, and headshot avatar.
 
-Touch devices use a smaller automatic scale by default. Override it with `MobileScale = 0.82`, or pass `Scale = 0.94` to force one scale everywhere.
+Touch devices use a smaller automatic scale by default. Override it with `MobileScale = 0.78`, or pass `Scale = 0.9` to force one scale everywhere.
 
 The top search box filters the active page by group/control title, description, flag, and placeholder text.
 

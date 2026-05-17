@@ -30,14 +30,14 @@ local Window = Singularity:CreateWindow({
     Title = "Singularity",
     Subtitle = "v0.0.1",
     Theme = "Singularity",
-    Logo = 77666858594516,
+    Logo = 73636428262287,
     NavigationTitle = "Combat",
     SearchPlaceholder = "Search modules",
     Profile = {
         Enabled = true
     },
-    Size = UDim2.fromOffset(760, 480),
-    MinimizedWidth = 118,
+    Size = UDim2.fromOffset(700, 430),
+    MinimizedWidth = 104,
     ToggleKey = Enum.KeyCode.RightShift
 })
 
@@ -56,7 +56,7 @@ local Settings = Window:Tab({
 local Aimbot = Page:Group({
     Title = "Aimbot",
     Icon = "crosshair",
-    Height = 310,
+    Height = 260,
     Segment = "Combat"
 })
 
