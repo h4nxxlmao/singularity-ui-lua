@@ -31,479 +31,569 @@ local Window = Singularity:CreateWindow({
     Theme = "singularity-dark",
     Logo = 73636428262287,
     Game = "Universal",
-    NavigationTitle = "Preview",
-    SearchPlaceholder = "Search preview",
+    NavigationTitle = "Modules",
+    SearchPlaceholder = "Search modules",
     Profile = {
         Enabled = true
     },
-    Instructions = "Static UI settings are always available here. Use the preview pages to test every public control and window helper.",
+    Instructions = "Universal config and UI size controls are built in. This example is a realistic multi-page script layout.",
     Size = UDim2.fromOffset(720, 440),
     ToggleKey = Enum.KeyCode.RightShift
 })
 
-local StatusLabel
-
-local function inspectValue(value)
-    if typeof(value) == "Color3" then
-        return string.format("rgb(%d,%d,%d)", math.floor(value.R * 255), math.floor(value.G * 255), math.floor(value.B * 255))
-    end
-
-    if typeof(value) == "EnumItem" then
-        return value.Name
-    end
-
-    if typeof(value) == "table" then
-        local items = {}
-
-        for key, entry in pairs(value) do
-            table.insert(items, tostring(key) .. "=" .. tostring(entry))
-        end
-
-        table.sort(items)
-        return "{" .. table.concat(items, ", ") .. "}"
-    end
-
-    return tostring(value)
+local function notify(title, content)
+    Window:Notify({
+        Title = title,
+        Content = content,
+        Duration = 2
+    })
 end
 
-local function preview(action, value)
-    local text = action .. (value ~= nil and (": " .. inspectValue(value)) or "")
-    print("[Singularity Preview]", text)
-
-    if StatusLabel then
-        StatusLabel.Desc.Text = text
-    end
-end
-
-local Controls = Window:CreateTab({
-    Title = "Controls",
-    Icon = "layout-dashboard",
-    Segments = { "Basic", "Inputs", "Pickers" }
+local Combat = Window:Tab({
+    Title = "Combat",
+    Icon = "crosshair",
+    Segments = { "Aimbot", "Silent", "Weapon" }
 })
 
-local Methods = Window:CreateTab({
-    Title = "Methods",
-    Icon = "settings",
-    Segments = { "Window", "Flags", "Objects" }
+local Visuals = Window:Tab({
+    Title = "Visuals",
+    Icon = "eyes",
+    Segments = { "ESP", "World", "Camera" }
 })
 
-local Config = Window:CreateTab({
-    Title = "Config",
-    Icon = "folder",
-    Segments = { "Files", "Import", "Info" }
+local Movement = Window:Tab({
+    Title = "Movement",
+    Icon = "gamepad",
+    Segments = { "Player", "Flight", "Teleport" }
 })
 
-local Layout = Window:CreateTab({
-    Title = "Layout",
-    Icon = "page",
-    Segments = { "Sections", "Long", "Search" }
-})
-
-local Basic = Controls:CreateGroup({
-    Title = "Basic Controls",
+local Utility = Window:Tab({
+    Title = "Utility",
     Icon = "plug",
-    Height = 300,
-    Segment = "Basic"
+    Segments = { "Automation", "Server", "Safety" }
 })
 
-StatusLabel = Basic:CreateParagraph({
-    Title = "Live Preview",
-    Content = "Click any control to see callback output here."
-})
-
-Basic:CreateButton({
-    Title = "Button",
-    Desc = "Calls Window:Notify and updates this preview.",
-    Callback = function()
-        preview("Button clicked")
-        Window:Notify({
-            Title = "Button",
-            Content = "Button callback fired.",
-            Duration = 2
-        })
-    end
-})
-
-local EnabledToggle = Basic:CreateToggle({
-    Title = "Toggle Slider",
-    Desc = "Uses the slider toggle style.",
-    Default = true,
-    Flag = "preview_toggle",
-    Callback = function(value)
-        preview("Toggle callback", value)
-    end
-})
-
-local PowerSlider = Basic:CreateSlider({
-    Title = "Slider",
-    Min = 0,
-    Max = 100,
-    Default = 45,
-    Suffix = "%",
-    Flag = "preview_slider",
-    Callback = function(value)
-        preview("Slider callback", value)
-    end
-})
-
-local Inputs = Controls:CreateGroup({
-    Title = "Inputs",
-    Icon = "keyboard",
-    Height = 260,
-    Segment = "Inputs"
-})
-
-local TextInput = Inputs:CreateInput({
-    Title = "Input",
-    Placeholder = "Type text",
-    Default = "Singularity",
-    Flag = "preview_input",
-    Callback = function(value)
-        preview("Input callback", value)
-    end
-})
-
-local SingleDropdown = Inputs:CreateDropdown({
-    Title = "Dropdown",
-    Values = { "Closest", "Lowest HP", "Mouse", "Random" },
-    Default = "Closest",
-    Flag = "preview_dropdown",
-    Callback = function(value)
-        preview("Dropdown callback", value)
-    end
-})
-
-local MultiDropdown = Inputs:CreateDropdown({
-    Title = "Multi Dropdown",
-    Multi = true,
-    Values = { "ESP", "Tracers", "Names", "Health" },
-    Default = { "ESP", "Names" },
-    Flag = "preview_multi_dropdown",
-    Callback = function(value)
-        preview("Multi dropdown callback", value)
-    end
-})
-
-local Pickers = Controls:CreateGroup({
-    Title = "Pickers",
-    Icon = "palette",
-    Height = 230,
-    Segment = "Pickers"
-})
-
-local ActionKey = Pickers:CreateKeybind({
-    Title = "Keybind",
-    Default = Enum.KeyCode.F,
-    Flag = "preview_keybind",
-    Callback = function(key)
-        preview("Keybind pressed", key)
-    end
-})
-
-local AccentColor = Pickers:CreateColorpicker({
-    Title = "Colorpicker",
-    Default = Color3.fromRGB(255, 255, 255),
-    Flag = "preview_color",
-    Callback = function(value)
-        preview("Colorpicker callback", value)
-    end
-})
-
-local WindowMethods = Methods:CreateGroup({
-    Title = "Window Methods",
+local Config = Window:Tab({
+    Title = "Config",
     Icon = "settings",
-    Height = 300,
-    Segment = "Window"
+    Segments = { "Profiles", "Keybinds", "About" }
 })
 
-WindowMethods:CreateButton({
-    Title = "Window:Notify()",
-    Callback = function()
-        preview("Window:Notify()")
-        Window:Notify({
-            Title = "Notify",
-            Content = "Window notification helper works.",
-            Duration = 2
-        })
+local Aimbot = Combat:Group({
+    Title = "Aimbot",
+    Icon = "crosshair",
+    Height = 315,
+    Segment = "Aimbot"
+})
+
+Aimbot:Paragraph({
+    Title = "Targeting",
+    Content = "Main combat page with common aimbot controls for testing toggles, sliders, dropdowns, keybinds, and paragraphs."
+})
+
+Aimbot:Toggle({
+    Title = "Enable Aimbot",
+    Desc = "Locks camera toward the selected target mode.",
+    Default = false,
+    Flag = "aimbot_enabled",
+    Callback = function(value)
+        notify("Aimbot", value and "Enabled" or "Disabled")
     end
 })
 
-WindowMethods:CreateButton({
-    Title = "Window:SetMinimized(true)",
+Aimbot:Slider({
+    Title = "Accuracy",
+    Min = 1,
+    Max = 100,
+    Default = 72,
+    Suffix = "%",
+    Flag = "aimbot_accuracy"
+})
+
+Aimbot:Slider({
+    Title = "Smoothness",
+    Min = 1,
+    Max = 25,
+    Default = 8,
+    Flag = "aimbot_smoothness"
+})
+
+Aimbot:Slider({
+    Title = "FOV Radius",
+    Min = 30,
+    Max = 450,
+    Default = 160,
+    Flag = "aimbot_fov"
+})
+
+Aimbot:Dropdown({
+    Title = "Hit Part",
+    Values = { "Head", "HumanoidRootPart", "UpperTorso", "Closest Part" },
+    Default = "Head",
+    Flag = "aimbot_hitpart"
+})
+
+Aimbot:Dropdown({
+    Title = "Target Priority",
+    Values = { "Closest Cursor", "Closest Distance", "Lowest Health", "Random" },
+    Default = "Closest Cursor",
+    Flag = "aimbot_priority"
+})
+
+Aimbot:Keybind({
+    Title = "Aim Key",
+    Default = Enum.KeyCode.E,
+    Flag = "aimbot_key",
     Callback = function()
-        preview("Window:SetMinimized(true)")
+        notify("Aimbot", "Aim key pressed")
+    end
+})
+
+local Silent = Combat:Group({
+    Title = "Silent Aim",
+    Icon = "scan",
+    Height = 260,
+    Segment = "Silent"
+})
+
+Silent:Toggle({
+    Title = "Enable Silent Aim",
+    Default = false,
+    Flag = "silent_enabled"
+})
+
+Silent:Slider({
+    Title = "Hit Chance",
+    Min = 1,
+    Max = 100,
+    Default = 65,
+    Suffix = "%",
+    Flag = "silent_hitchance"
+})
+
+Silent:Toggle({
+    Title = "Wall Check",
+    Default = true,
+    Flag = "silent_wallcheck"
+})
+
+Silent:Toggle({
+    Title = "Team Check",
+    Default = true,
+    Flag = "silent_teamcheck"
+})
+
+Silent:Dropdown({
+    Title = "Resolver",
+    Values = { "Off", "Basic", "Velocity", "Prediction" },
+    Default = "Basic",
+    Flag = "silent_resolver"
+})
+
+local Weapon = Combat:Group({
+    Title = "Weapon",
+    Icon = "bag",
+    Height = 260,
+    Segment = "Weapon"
+})
+
+Weapon:Toggle({
+    Title = "No Recoil",
+    Default = true,
+    Flag = "weapon_no_recoil"
+})
+
+Weapon:Toggle({
+    Title = "No Spread",
+    Default = false,
+    Flag = "weapon_no_spread"
+})
+
+Weapon:Slider({
+    Title = "Fire Rate",
+    Min = 1,
+    Max = 10,
+    Default = 3,
+    Suffix = "x",
+    Flag = "weapon_fire_rate"
+})
+
+Weapon:Dropdown({
+    Title = "Reload Mode",
+    Values = { "Normal", "Instant", "Auto Reload" },
+    Default = "Normal",
+    Flag = "weapon_reload_mode"
+})
+
+local Esp = Visuals:Group({
+    Title = "ESP",
+    Icon = "player",
+    Height = 320,
+    Segment = "ESP"
+})
+
+Esp:Toggle({
+    Title = "Enable ESP",
+    Default = true,
+    Flag = "esp_enabled"
+})
+
+Esp:Dropdown({
+    Title = "ESP Parts",
+    Multi = true,
+    Values = { "Boxes", "Names", "Health", "Distance", "Tracers" },
+    Default = { "Boxes", "Names", "Health" },
+    Flag = "esp_parts"
+})
+
+Esp:Colorpicker({
+    Title = "Enemy Color",
+    Default = Color3.fromRGB(255, 255, 255),
+    Flag = "esp_enemy_color"
+})
+
+Esp:Colorpicker({
+    Title = "Team Color",
+    Default = Color3.fromRGB(180, 180, 180),
+    Flag = "esp_team_color"
+})
+
+Esp:Slider({
+    Title = "Max Distance",
+    Min = 100,
+    Max = 5000,
+    Default = 1500,
+    Flag = "esp_distance"
+})
+
+local World = Visuals:Group({
+    Title = "World",
+    Icon = "gps",
+    Height = 245,
+    Segment = "World"
+})
+
+World:Toggle({
+    Title = "Fullbright",
+    Default = false,
+    Flag = "world_fullbright"
+})
+
+World:Toggle({
+    Title = "No Fog",
+    Default = true,
+    Flag = "world_no_fog"
+})
+
+World:Slider({
+    Title = "Clock Time",
+    Min = 0,
+    Max = 24,
+    Default = 14,
+    Flag = "world_time"
+})
+
+World:Colorpicker({
+    Title = "Ambient",
+    Default = Color3.fromRGB(255, 255, 255),
+    Flag = "world_ambient"
+})
+
+local Camera = Visuals:Group({
+    Title = "Camera",
+    Icon = "scan",
+    Height = 230,
+    Segment = "Camera"
+})
+
+Camera:Slider({
+    Title = "Field Of View",
+    Min = 60,
+    Max = 120,
+    Default = 80,
+    Flag = "camera_fov"
+})
+
+Camera:Toggle({
+    Title = "Third Person",
+    Default = false,
+    Flag = "camera_third_person"
+})
+
+Camera:Slider({
+    Title = "Camera Distance",
+    Min = 4,
+    Max = 30,
+    Default = 12,
+    Flag = "camera_distance"
+})
+
+local Player = Movement:Group({
+    Title = "Player",
+    Icon = "player",
+    Height = 300,
+    Segment = "Player"
+})
+
+Player:Toggle({
+    Title = "Speed Enabled",
+    Default = false,
+    Flag = "speed_enabled"
+})
+
+Player:Slider({
+    Title = "WalkSpeed",
+    Min = 16,
+    Max = 150,
+    Default = 32,
+    Flag = "walkspeed"
+})
+
+Player:Toggle({
+    Title = "Jump Enabled",
+    Default = false,
+    Flag = "jump_enabled"
+})
+
+Player:Slider({
+    Title = "JumpPower",
+    Min = 50,
+    Max = 250,
+    Default = 85,
+    Flag = "jumppower"
+})
+
+Player:Keybind({
+    Title = "Speed Key",
+    Default = Enum.KeyCode.LeftShift,
+    Flag = "speed_key"
+})
+
+local Flight = Movement:Group({
+    Title = "Flight",
+    Icon = "next",
+    Height = 245,
+    Segment = "Flight"
+})
+
+Flight:Toggle({
+    Title = "Enable Fly",
+    Default = false,
+    Flag = "fly_enabled"
+})
+
+Flight:Slider({
+    Title = "Fly Speed",
+    Min = 1,
+    Max = 10,
+    Default = 3,
+    Flag = "fly_speed"
+})
+
+Flight:Keybind({
+    Title = "Fly Toggle",
+    Default = Enum.KeyCode.X,
+    Flag = "fly_key"
+})
+
+local Teleport = Movement:Group({
+    Title = "Teleport",
+    Icon = "gps",
+    Height = 245,
+    Segment = "Teleport"
+})
+
+Teleport:Dropdown({
+    Title = "Location",
+    Values = { "Spawn", "Shop", "Safe Zone", "Objective", "Random Player" },
+    Default = "Spawn",
+    Flag = "teleport_location"
+})
+
+Teleport:Button({
+    Title = "Teleport",
+    Callback = function()
+        notify("Teleport", "Teleport button pressed")
+    end
+})
+
+Teleport:Button({
+    Title = "Bring Nearest Player",
+    Callback = function()
+        notify("Teleport", "Bring nearest player pressed")
+    end
+})
+
+local Automation = Utility:Group({
+    Title = "Automation",
+    Icon = "loop",
+    Height = 275,
+    Segment = "Automation"
+})
+
+Automation:Toggle({
+    Title = "Auto Farm",
+    Default = false,
+    Flag = "auto_farm"
+})
+
+Automation:Dropdown({
+    Title = "Farm Mode",
+    Values = { "Legit", "Fast", "Safe", "Quest" },
+    Default = "Legit",
+    Flag = "farm_mode"
+})
+
+Automation:Slider({
+    Title = "Farm Delay",
+    Min = 0,
+    Max = 5,
+    Default = 1,
+    Suffix = "s",
+    Flag = "farm_delay"
+})
+
+Automation:Toggle({
+    Title = "Auto Collect Drops",
+    Default = true,
+    Flag = "auto_collect"
+})
+
+local Server = Utility:Group({
+    Title = "Server",
+    Icon = "notify",
+    Height = 235,
+    Segment = "Server"
+})
+
+Server:Button({
+    Title = "Server Hop",
+    Callback = function()
+        notify("Server", "Server hop pressed")
+    end
+})
+
+Server:Button({
+    Title = "Rejoin",
+    Callback = function()
+        notify("Server", "Rejoin pressed")
+    end
+})
+
+Server:Toggle({
+    Title = "Low Player Servers",
+    Default = true,
+    Flag = "low_player_servers"
+})
+
+local Safety = Utility:Group({
+    Title = "Safety",
+    Icon = "alert",
+    Height = 235,
+    Segment = "Safety"
+})
+
+Safety:Toggle({
+    Title = "Panic Mode",
+    Default = false,
+    Flag = "panic_mode"
+})
+
+Safety:Keybind({
+    Title = "Panic Key",
+    Default = Enum.KeyCode.P,
+    Flag = "panic_key",
+    Callback = function()
         Window:SetMinimized(true)
     end
 })
 
-WindowMethods:CreateButton({
-    Title = "Window:SetScale(0.9)",
+Safety:Button({
+    Title = "Unload UI",
     Callback = function()
-        preview("Window:SetScale(0.9)")
-        Window:SetScale(0.9)
+        Window:Destroy()
     end
 })
 
-WindowMethods:CreateButton({
-    Title = "Window:SetSize(720, 440)",
-    Callback = function()
-        preview("Window:SetSize(720, 440)")
-        Window:SetSize(720, 440)
-    end
-})
-
-WindowMethods:CreateButton({
-    Title = "Window:SetTheme()",
-    Callback = function()
-        preview("Window:SetTheme(\"singularity-dark\")")
-        Window:SetTheme("singularity-dark")
-    end
-})
-
-local FlagMethods = Methods:CreateGroup({
-    Title = "Flags",
-    Icon = "flag",
-    Height = 230,
-    Segment = "Flags"
-})
-
-FlagMethods:CreateButton({
-    Title = "Window:SetFlag()",
-    Callback = function()
-        Window:SetFlag("manual_flag", "set from button")
-        preview("Window:SetFlag()", Window:GetFlag("manual_flag"))
-    end
-})
-
-FlagMethods:CreateButton({
-    Title = "Window:GetFlag()",
-    Callback = function()
-        preview("Window:GetFlag(preview_input)", Window:GetFlag("preview_input"))
-    end
-})
-
-FlagMethods:CreateButton({
-    Title = "Window:ExportConfig()",
-    Callback = function()
-        local data = Window:ExportConfig()
-        preview("Window:ExportConfig()", "flags=" .. tostring(data.Flags ~= nil))
-    end
-})
-
-local ObjectMethods = Methods:CreateGroup({
-    Title = "Returned Objects",
-    Icon = "loop",
-    Height = 280,
-    Segment = "Objects"
-})
-
-ObjectMethods:CreateButton({
-    Title = "Toggle:Set(false)",
-    Callback = function()
-        EnabledToggle:Set(false)
-        preview("Toggle:Set(false)")
-    end
-})
-
-ObjectMethods:CreateButton({
-    Title = "Slider:Set(80)",
-    Callback = function()
-        PowerSlider:Set(80)
-        preview("Slider:Set(80)")
-    end
-})
-
-ObjectMethods:CreateButton({
-    Title = "Input:Set(\"Updated\")",
-    Callback = function()
-        TextInput:Set("Updated")
-        preview("Input:Set(\"Updated\")")
-    end
-})
-
-ObjectMethods:CreateButton({
-    Title = "Dropdown:Set(\"Mouse\")",
-    Callback = function()
-        SingleDropdown:Set("Mouse")
-        preview("Dropdown:Set(\"Mouse\")")
-    end
-})
-
-ObjectMethods:CreateButton({
-    Title = "Dropdown:Refresh()",
-    Callback = function()
-        SingleDropdown:Refresh({ "Closest", "Mouse", "Team Check", "New Option" })
-        preview("Dropdown:Refresh()", "added New Option")
-    end
-})
-
-ObjectMethods:CreateButton({
-    Title = "Colorpicker:Set()",
-    Callback = function()
-        AccentColor:Set(Color3.fromRGB(180, 180, 180))
-        preview("Colorpicker:Set()", Color3.fromRGB(180, 180, 180))
-    end
-})
-
-ObjectMethods:CreateButton({
-    Title = "Keybind:Set(Q)",
-    Callback = function()
-        ActionKey:Set(Enum.KeyCode.Q)
-        preview("Keybind:Set(Q)")
-    end
-})
-
-local FileConfig = Config:CreateGroup({
-    Title = "File Config",
+local Profiles = Config:Group({
+    Title = "Profiles",
     Icon = "folder",
-    Height = 230,
-    Segment = "Files"
+    Height = 275,
+    Segment = "Profiles"
 })
 
-FileConfig:CreateInput({
+Profiles:Input({
     Title = "Config Name",
-    Placeholder = "Preview",
-    Default = "Preview",
+    Placeholder = "Default",
+    Default = "Default",
     Flag = "config_name"
 })
 
-FileConfig:CreateButton({
-    Title = "Window:SaveConfig(name)",
+Profiles:Button({
+    Title = "Save Config",
     Callback = function()
-        local ok = Window:SaveConfig(Window:GetFlag("config_name") or "Preview")
-        preview("Window:SaveConfig()", ok)
+        local ok = Window:SaveConfig(Window:GetFlag("config_name") or "Default")
+        notify("Config", ok and "Saved config" or "Executor does not support writefile")
     end
 })
 
-FileConfig:CreateButton({
-    Title = "Window:LoadConfig(name)",
+Profiles:Button({
+    Title = "Load Config",
     Callback = function()
-        local ok = Window:LoadConfig(Window:GetFlag("config_name") or "Preview")
-        preview("Window:LoadConfig()", ok)
+        local ok = Window:LoadConfig(Window:GetFlag("config_name") or "Default")
+        notify("Config", ok and "Loaded config" or "Config not found")
     end
 })
 
-local ImportConfig = Config:CreateGroup({
-    Title = "Import Config",
-    Icon = "download",
-    Height = 210,
-    Segment = "Import"
-})
-
-ImportConfig:CreateButton({
-    Title = "Window:ImportConfig(table)",
+Profiles:Button({
+    Title = "Export Config",
     Callback = function()
-        local ok = Window:ImportConfig({
-            Flags = {
-                preview_toggle = true,
-                preview_slider = 25,
-                preview_input = "Imported"
-            },
-            UI = {
-                Scale = 0.95,
-                Width = 720,
-                Height = 440
-            }
-        })
-
-        EnabledToggle:Set(true, true)
-        PowerSlider:Set(25, true)
-        TextInput:Set("Imported", true)
-        preview("Window:ImportConfig()", ok)
+        local data = Window:ExportConfig()
+        notify("Config", "Exported " .. tostring(data.Flags and "flags" or "config"))
     end
 })
 
-ImportConfig:CreateButton({
-    Title = "Singularity:Notify()",
+local Keybinds = Config:Group({
+    Title = "Keybinds",
+    Icon = "keyboard",
+    Height = 235,
+    Segment = "Keybinds"
+})
+
+Keybinds:Keybind({
+    Title = "Menu Toggle",
+    Default = Enum.KeyCode.RightShift,
+    Flag = "menu_key"
+})
+
+Keybinds:Keybind({
+    Title = "Main Action",
+    Default = Enum.KeyCode.F,
+    Flag = "action_key"
+})
+
+Keybinds:Button({
+    Title = "Minimize UI",
     Callback = function()
-        preview("Singularity:Notify()")
-        Singularity:Notify({
-            Title = "Library Notify",
-            Content = "Direct library notification works too.",
-            Duration = 2
-        })
+        Window:SetMinimized(true)
     end
 })
 
-local ConfigInfo = Config:CreateGroup({
-    Title = "Built In Settings",
-    Icon = "idea",
-    Height = 170,
-    Segment = "Info"
+local About = Config:Group({
+    Title = "About",
+    Icon = "question",
+    Height = 220,
+    Segment = "About"
 })
 
-ConfigInfo:CreateParagraph({
-    Title = "Static UI Page",
-    Content = "The built-in UI tab cannot be disabled. It previews scale, width, height, save config, and load config."
+About:Paragraph({
+    Title = "Example Script",
+    Content = "This file previews the UI like a real multi-page script: Combat, Visuals, Movement, Utility, and Config."
 })
 
-Layout:CreateSection("Section Label Preview")
-
-local Sections = Layout:CreateGroup({
-    Title = "Sections",
-    Icon = "page",
-    Height = 210,
-    Segment = "Sections"
-})
-
-Sections:CreateParagraph({
-    Title = "Paragraph",
-    Content = "This previews standalone sections, grouped paragraphs, and wrapped instruction text."
-})
-
-Sections:CreateButton({
-    Title = "Select Controls Tab",
+About:Button({
+    Title = "Show Notification",
     Callback = function()
-        Controls:Select()
-        preview("Tab:Select()", "Controls")
-    end
-})
-
-local Long = Layout:CreateGroup({
-    Title = "Long Content",
-    Icon = "list",
-    Height = 340,
-    Segment = "Long"
-})
-
-for index = 1, 8 do
-    Long:CreateToggle({
-        Title = "Scrollable Toggle " .. tostring(index),
-        Default = index % 2 == 0,
-        Flag = "scroll_toggle_" .. tostring(index),
-        Callback = function(value)
-            preview("Scrollable toggle " .. tostring(index), value)
-        end
-    })
-end
-
-local Search = Layout:CreateGroup({
-    Title = "Search Targets",
-    Icon = "search",
-    Height = 260,
-    Segment = "Search"
-})
-
-Search:CreateParagraph({
-    Title = "Search Test",
-    Content = "Try searching for button, dropdown, keybind, import, scrollable, or notify."
-})
-
-Search:CreateButton({
-    Title = "Reset Preview",
-    Callback = function()
-        EnabledToggle:Set(true)
-        PowerSlider:Set(45)
-        TextInput:Set("Singularity")
-        SingleDropdown:Set("Closest")
-        MultiDropdown:Set({
-            ESP = true,
-            Names = true
-        })
-        AccentColor:Set(Color3.fromRGB(255, 255, 255))
-        ActionKey:Set(Enum.KeyCode.F)
-        Window:SetScale(1)
-        Window:SetSize(720, 440)
-        preview("Preview reset")
+        notify("Singularity", "Example callback works.")
     end
 })
