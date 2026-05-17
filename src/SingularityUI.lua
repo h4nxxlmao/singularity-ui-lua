@@ -970,7 +970,11 @@ function Singularity:CreateWindow(options)
 
     window:_build()
 
-    window:_buildBuiltInSettings()
+    task.defer(function()
+        if window and window.Main and window.Main.Parent then
+            window:_ensureBuiltInSettings()
+        end
+    end)
 
     if options.Notify ~= false then
         self:Notify({
@@ -2110,6 +2114,8 @@ function Window:Tab(options)
         Window = self,
         Title = options.Title or options.Name or ("Tab " .. tostring(#self.Tabs + 1)),
         Icon = options.Icon,
+        IsSystem = options.System == true,
+        LayoutOrder = options.LayoutOrder,
         Segments = options.Segments or options.Subtabs or options.Sections or {},
         ActiveSegment = options.ActiveSegment or options.DefaultSegment,
         SegmentCallback = options.SegmentCallback,
@@ -2119,10 +2125,16 @@ function Window:Tab(options)
     tab:_build()
     table.insert(self.Tabs, tab)
 
-    if not self.ActiveTab or options.Default then
+    local onlySystemSelected = self.ActiveTab and self.ActiveTab.IsSystem and not tab.IsSystem
+
+    if not self.ActiveTab or onlySystemSelected or options.Default then
         tab:Select()
     else
         tab.Page.Visible = false
+    end
+
+    if not tab.IsSystem then
+        self:_ensureBuiltInSettings()
     end
 
     return tab
@@ -2270,8 +2282,9 @@ function Tab:_build()
         BackgroundColor3 = theme.Sidebar,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
+        LayoutOrder = self.LayoutOrder or (self.IsSystem and 10000 or #window.Tabs + 1),
         Text = "",
-            Size = UDim2.new(1, 0, 0, 32),
+        Size = UDim2.new(1, 0, 0, 32),
         Parent = window.TabHolder
     })
     addCorner(button, 8)
@@ -3431,9 +3444,20 @@ function Tab:Colorpicker(options)
 end
 
 function Window:_buildBuiltInSettings()
+    local hasUserTabs = false
+
+    for _, tab in ipairs(self.Tabs) do
+        if not tab.IsSystem then
+            hasUserTabs = true
+            break
+        end
+    end
+
     local settings = self:Tab({
         Title = "UI",
-        Icon = "settings"
+        Icon = "settings",
+        System = true,
+        LayoutOrder = 10000
     })
     self._builtInSettingsTab = settings
 
@@ -3507,13 +3531,23 @@ function Window:_buildBuiltInSettings()
         end
     })
 
-    if settings.Page then
+    if hasUserTabs and settings.Page then
         settings.Page.Visible = false
     end
 
-    if self.ActiveTab == settings then
+    if hasUserTabs and self.ActiveTab == settings then
         self.ActiveTab = nil
     end
+
+    return settings
+end
+
+function Window:_ensureBuiltInSettings()
+    if self._builtInSettingsTab then
+        return self._builtInSettingsTab
+    end
+
+    return self:_buildBuiltInSettings()
 end
 
 Tab.CreateSection = Tab.Section
