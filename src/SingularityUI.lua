@@ -2133,10 +2133,6 @@ function Window:Tab(options)
         tab.Page.Visible = false
     end
 
-    if not tab.IsSystem then
-        self:_ensureBuiltInSettings()
-    end
-
     return tab
 end
 
@@ -3454,7 +3450,7 @@ function Window:_buildBuiltInSettings()
     end
 
     local settings = self:Tab({
-        Title = "UI",
+        Title = "Settings",
         Icon = "settings",
         System = true,
         LayoutOrder = 10000

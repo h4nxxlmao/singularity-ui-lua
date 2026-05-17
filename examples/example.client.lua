@@ -36,7 +36,7 @@ local Window = Singularity:CreateWindow({
     Profile = {
         Enabled = true
     },
-    Instructions = "Universal config and UI size controls are built in. This example is a realistic multi-page script layout.",
+    Instructions = "Universal config and UI size controls are built into the static Settings tab. This example is a realistic multi-page script layout.",
     Size = UDim2.fromOffset(720, 440),
     ToggleKey = Enum.KeyCode.RightShift
 })
@@ -524,13 +524,13 @@ local Profiles = Config:Group({
 
 Profiles:Paragraph({
     Title = "Built In JSON Saver",
-    Content = "Use the static UI tab to save and load every flagged control. Script developers do not need to create config buttons."
+    Content = "Use the static Settings tab to save and load every flagged control. Script developers do not need to create config buttons."
 })
 
 Profiles:Button({
     Title = "Open Config Notice",
     Callback = function()
-        notify("Config", "Open the UI tab for built-in JSON save/load.")
+        notify("Config", "Open Settings for built-in JSON save/load.")
     end
 })
 
