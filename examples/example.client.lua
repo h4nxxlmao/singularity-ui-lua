@@ -516,40 +516,21 @@ Safety:Button({
 })
 
 local Profiles = Config:Group({
-    Title = "Profiles",
+    Title = "Static Config",
     Icon = "folder",
-    Height = 275,
+    Height = 210,
     Segment = "Profiles"
 })
 
-Profiles:Input({
-    Title = "Config Name",
-    Placeholder = "Default",
-    Default = "Default",
-    Flag = "config_name"
+Profiles:Paragraph({
+    Title = "Built In JSON Saver",
+    Content = "Use the static UI tab to save and load every flagged control. Script developers do not need to create config buttons."
 })
 
 Profiles:Button({
-    Title = "Save Config",
+    Title = "Open Config Notice",
     Callback = function()
-        local ok = Window:SaveConfig(Window:GetFlag("config_name") or "Default")
-        notify("Config", ok and "Saved config" or "Executor does not support writefile")
-    end
-})
-
-Profiles:Button({
-    Title = "Load Config",
-    Callback = function()
-        local ok = Window:LoadConfig(Window:GetFlag("config_name") or "Default")
-        notify("Config", ok and "Loaded config" or "Config not found")
-    end
-})
-
-Profiles:Button({
-    Title = "Export Config",
-    Callback = function()
-        local data = Window:ExportConfig()
-        notify("Config", "Exported " .. tostring(data.Flags and "flags" or "config"))
+        notify("Config", "Open the UI tab for built-in JSON save/load.")
     end
 })
 

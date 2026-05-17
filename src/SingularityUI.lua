@@ -963,6 +963,7 @@ function Singularity:CreateWindow(options)
         Options = options,
         Tabs = {},
         Flags = {},
+        _flagControls = {},
         _connections = {},
         _minimized = false
     }, Window)
@@ -1911,7 +1912,30 @@ local function decodeConfigValue(value)
         return Color3.fromRGB(value.R or 255, value.G or 255, value.B or 255)
     end
 
+    if typeof(value) == "table" and value.Type == "EnumItem" then
+        local enumType = tostring(value.EnumType or ""):gsub("^Enum%.", "")
+        local enumName = tostring(value.Name or "")
+        local ok, enumValue = pcall(function()
+            return Enum[enumType][enumName]
+        end)
+
+        if ok and enumValue then
+            return enumValue
+        end
+    end
+
     return value
+end
+
+local function sanitizeConfigName(name)
+    name = tostring(name or "Singularity")
+    name = name:gsub("[^%w%-%_%. ]", "_"):gsub("^%s+", ""):gsub("%s+$", "")
+
+    if name == "" then
+        name = "Singularity"
+    end
+
+    return name
 end
 
 function Window:GetFlag(flag)
@@ -1920,6 +1944,12 @@ end
 
 function Window:SetFlag(flag, value)
     self.Flags[flag] = value
+end
+
+function Window:_registerFlagControl(flag, control)
+    if flag and control then
+        self._flagControls[tostring(flag)] = control
+    end
 end
 
 function Window:SetScale(scale)
@@ -1987,7 +2017,13 @@ function Window:ImportConfig(data)
 
     if typeof(data.Flags) == "table" then
         for key, value in pairs(data.Flags) do
-            self:SetFlag(key, decodeConfigValue(value))
+            local decoded = decodeConfigValue(value)
+            self:SetFlag(key, decoded)
+
+            local control = self._flagControls and self._flagControls[tostring(key)]
+            if control and control.Set then
+                control.Set(decoded, true)
+            end
         end
     end
 
@@ -2005,10 +2041,10 @@ function Window:ImportConfig(data)
 end
 
 function Window:SaveConfig(name)
-    name = tostring(name or self.Options.ConfigName or self.Options.Title or "Singularity")
+    name = sanitizeConfigName(name or self.Options.ConfigName or self.Options.Title or "Singularity")
 
     if typeof(writefile) ~= "function" then
-        return false
+        return false, nil
     end
 
     local ok, encoded = pcall(function()
@@ -2016,7 +2052,7 @@ function Window:SaveConfig(name)
     end)
 
     if not ok then
-        return false
+        return false, nil
     end
 
     local folderReady = false
@@ -2036,14 +2072,14 @@ function Window:SaveConfig(name)
         writefile(path, encoded)
     end)
 
-    return wrote
+    return wrote, path
 end
 
 function Window:LoadConfig(name)
-    name = tostring(name or self.Options.ConfigName or self.Options.Title or "Singularity")
+    name = sanitizeConfigName(name or self.Options.ConfigName or self.Options.Title or "Singularity")
 
     if typeof(readfile) ~= "function" or typeof(isfile) ~= "function" then
-        return false
+        return false, nil
     end
 
     local path = "SingularityUI/" .. name .. ".json"
@@ -2052,7 +2088,7 @@ function Window:LoadConfig(name)
         path = "SingularityUI_" .. name .. ".json"
 
         if not isfile(path) then
-            return false
+            return false, nil
         end
     end
 
@@ -2061,10 +2097,10 @@ function Window:LoadConfig(name)
     end)
 
     if not ok then
-        return false
+        return false, path
     end
 
-    return self:ImportConfig(decoded)
+    return self:ImportConfig(decoded), path
 end
 
 function Window:Tab(options)
@@ -2626,7 +2662,15 @@ function Tab:Toggle(options)
         end
     end
 
-    object.Set = apply
+    object.Set = function(first, second, third)
+        if first == object then
+            apply(second, third)
+        else
+            apply(first, second)
+        end
+    end
+
+    self.Window:_registerFlagControl(options.Flag, object)
 
     frame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -2733,7 +2777,15 @@ function Tab:Slider(options)
         apply(min + ((max - min) * math.clamp(alpha, 0, 1)), silent)
     end
 
-    object.Set = apply
+    object.Set = function(first, second, third)
+        if first == object then
+            apply(second, third)
+        else
+            apply(first, second)
+        end
+    end
+
+    self.Window:_registerFlagControl(options.Flag, object)
 
     track.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -2819,7 +2871,15 @@ function Tab:Input(options)
             end
         end
 
-        control.Set = apply
+        control.Set = function(first, second, third)
+            if first == control then
+                apply(second, third)
+            else
+                apply(first, second)
+            end
+        end
+
+        self.Window:_registerFlagControl(options.Flag, control)
 
         box.FocusLost:Connect(function()
             apply(box.Text)
@@ -2889,7 +2949,15 @@ function Tab:Input(options)
         end
     end
 
-    object.Set = apply
+    object.Set = function(first, second, third)
+        if first == object then
+            apply(second, third)
+        else
+            apply(first, second)
+        end
+    end
+
+    self.Window:_registerFlagControl(options.Flag, object)
 
     box.Focused:Connect(function()
         tween(box, { BackgroundColor3 = theme.SurfaceHover }, DEFAULT_TWEEN)
@@ -3102,11 +3170,19 @@ function Tab:Dropdown(options)
         selectText.Text = describeSelection()
     end
 
-    object.Set = apply
-    object.Refresh = function(newValues)
-        values = newValues or values
+    object.Set = function(first, second, third)
+        if first == object then
+            apply(second, third)
+        else
+            apply(first, second)
+        end
+    end
+    object.Refresh = function(first, second)
+        values = (first == object and second or first) or values
         rebuild()
     end
+
+    self.Window:_registerFlagControl(options.Flag, object)
 
     selectButton.MouseButton1Click:Connect(function()
         press(selectButton, selectButton.Size)
@@ -3172,7 +3248,15 @@ function Tab:Keybind(options)
         end
     end
 
-    object.Set = apply
+    object.Set = function(first, second, third)
+        if first == object then
+            apply(second, third)
+        else
+            apply(first, second)
+        end
+    end
+
+    self.Window:_registerFlagControl(options.Flag, object)
 
     keyButton.MouseButton1Click:Connect(function()
         press(keyButton, keyButton.Size)
@@ -3271,7 +3355,15 @@ function Tab:Colorpicker(options)
         end
     end
 
-    object.Set = applyColor
+    object.Set = function(first, second, third)
+        if first == object then
+            applyColor(second, third)
+        else
+            applyColor(first, second)
+        end
+    end
+
+    self.Window:_registerFlagControl(options.Flag, object)
 
     for index, channel in ipairs(channels) do
         local rowY = (control.Desc and 52 or 40) + ((index - 1) * 20)
@@ -3347,7 +3439,14 @@ function Window:_buildBuiltInSettings()
 
     settings:Paragraph({
         Title = "Instructions",
-        Content = self.Options.Instructions or "Use these static controls to adjust the interface and save or load a universal config."
+        Content = self.Options.Instructions or "Static UI settings and JSON config saving are built in for every script."
+    })
+
+    settings:Input({
+        Title = "Config Name",
+        Placeholder = "Default",
+        Default = self.Options.ConfigName or self.Options.Title or "Singularity",
+        Flag = "__ui_config_name"
     })
 
     settings:Slider({
@@ -3385,24 +3484,24 @@ function Window:_buildBuiltInSettings()
     })
 
     settings:Button({
-        Title = "Save Universal Config",
+        Title = "Save Config JSON",
         Callback = function()
-            local saved = self:SaveConfig()
+            local saved, path = self:SaveConfig(self:GetFlag("__ui_config_name"))
             self:Notify({
                 Title = saved and "Config saved" or "Config unavailable",
-                Content = saved and "Saved to SingularityUI config storage." or "This executor does not expose writefile/readfile.",
+                Content = saved and ("Saved JSON to " .. tostring(path)) or "This executor does not expose writefile.",
                 Duration = 2
             })
         end
     })
 
     settings:Button({
-        Title = "Load Universal Config",
+        Title = "Load Config JSON",
         Callback = function()
-            local loaded = self:LoadConfig()
+            local loaded, path = self:LoadConfig(self:GetFlag("__ui_config_name"))
             self:Notify({
                 Title = loaded and "Config loaded" or "Config unavailable",
-                Content = loaded and "Loaded saved flags and UI values." or "No readable config was found.",
+                Content = loaded and ("Loaded JSON from " .. tostring(path)) or "No readable config was found.",
                 Duration = 2
             })
         end
