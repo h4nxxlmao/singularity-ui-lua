@@ -3512,57 +3512,31 @@ function Window:_buildBuiltInSettings()
         Title = "Settings",
         Icon = "settings",
         System = true,
-        LayoutOrder = 10000
+        LayoutOrder = 10000,
+        Segments = { "Config", "Interface" }
     })
     self._builtInSettingsTab = settings
 
-    settings:Paragraph({
-        Title = "Instructions",
-        Content = self.Options.Instructions or "Static UI settings and JSON config saving are built in for every script."
+    local config = settings:Group({
+        Title = "JSON Config Loader",
+        Icon = "folder",
+        Height = 230,
+        Segment = "Config"
     })
 
-    settings:Input({
+    config:Paragraph({
+        Title = "Executor Storage",
+        Content = "Save and load every flagged control from one built-in JSON config file."
+    })
+
+    config:Input({
         Title = "Config Name",
         Placeholder = "Default",
         Default = self.Options.ConfigName or self.Options.Title or "Singularity",
         Flag = "__ui_config_name"
     })
 
-    settings:Slider({
-        Title = "Scale",
-        Min = 55,
-        Max = 125,
-        Default = math.floor((self.UIScale and self.UIScale.Scale or resolveScale(self.Options)) * 100 + 0.5),
-        Suffix = "%",
-        Flag = "__ui_scale",
-        Callback = function(value)
-            self:SetScale(value / 100)
-        end
-    })
-
-    settings:Slider({
-        Title = "Width",
-        Min = 540,
-        Max = 900,
-        Default = self.OriginalSize.X.Offset,
-        Flag = "__ui_width",
-        Callback = function(value)
-            self:SetSize(value, self.OriginalSize.Y.Offset)
-        end
-    })
-
-    settings:Slider({
-        Title = "Height",
-        Min = 320,
-        Max = 600,
-        Default = self.OriginalSize.Y.Offset,
-        Flag = "__ui_height",
-        Callback = function(value)
-            self:SetSize(self.OriginalSize.X.Offset, value)
-        end
-    })
-
-    settings:Button({
+    config:Button({
         Title = "Save Config JSON",
         Callback = function()
             local saved, path = self:SaveConfig(self:GetFlag("__ui_config_name"))
@@ -3574,7 +3548,7 @@ function Window:_buildBuiltInSettings()
         end
     })
 
-    settings:Button({
+    config:Button({
         Title = "Load Config JSON",
         Callback = function()
             local loaded, path = self:LoadConfig(self:GetFlag("__ui_config_name"))
@@ -3583,6 +3557,47 @@ function Window:_buildBuiltInSettings()
                 Content = loaded and ("Loaded JSON from " .. tostring(path)) or "No readable config was found.",
                 Duration = 2
             })
+        end
+    })
+
+    local interface = settings:Group({
+        Title = "Interface",
+        Icon = "settings",
+        Height = 230,
+        Segment = "Interface"
+    })
+
+    interface:Slider({
+        Title = "Scale",
+        Min = 55,
+        Max = 125,
+        Default = math.floor((self.UIScale and self.UIScale.Scale or resolveScale(self.Options)) * 100 + 0.5),
+        Suffix = "%",
+        Flag = "__ui_scale",
+        Callback = function(value)
+            self:SetScale(value / 100)
+        end
+    })
+
+    interface:Slider({
+        Title = "Width",
+        Min = 540,
+        Max = 900,
+        Default = self.OriginalSize.X.Offset,
+        Flag = "__ui_width",
+        Callback = function(value)
+            self:SetSize(value, self.OriginalSize.Y.Offset)
+        end
+    })
+
+    interface:Slider({
+        Title = "Height",
+        Min = 320,
+        Max = 600,
+        Default = self.OriginalSize.Y.Offset,
+        Flag = "__ui_height",
+        Callback = function(value)
+            self:SetSize(self.OriginalSize.X.Offset, value)
         end
     })
 

@@ -76,7 +76,7 @@ local Utility = Window:Tab({
 local Config = Window:Tab({
     Title = "Config",
     Icon = "settings",
-    Segments = { "Profiles", "Keybinds", "About" }
+    Segments = { "Keybinds", "About" }
 })
 
 local Aimbot = Combat:Group({
@@ -512,25 +512,6 @@ Safety:Button({
     Title = "Unload UI",
     Callback = function()
         Window:Destroy()
-    end
-})
-
-local Profiles = Config:Group({
-    Title = "Static Config",
-    Icon = "folder",
-    Height = 210,
-    Segment = "Profiles"
-})
-
-Profiles:Paragraph({
-    Title = "Built In JSON Saver",
-    Content = "Use the static Settings tab to save and load every flagged control. Script developers do not need to create config buttons."
-})
-
-Profiles:Button({
-    Title = "Open Config Notice",
-    Callback = function()
-        notify("Config", "Open Settings for built-in JSON save/load.")
     end
 })
 

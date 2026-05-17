@@ -129,7 +129,7 @@ The top search box filters the active page by group/control title, description, 
 
 ## Themes
 
-The default and only built-in theme is `singularity-dark`. The static built-in `Settings` tab is always created and cannot be disabled by script options. It includes scale, width, height, a config name input, and JSON save/load controls.
+The default and only built-in theme is `singularity-dark`. The static built-in `Settings` tab is always created and cannot be disabled by script options. JSON config save/load lives in one place at `Settings > Config`; UI scale, width, and height live separately at `Settings > Interface`.
 
 Universal config helpers are built in: `Window:SaveConfig(name)`, `Window:LoadConfig(name)`, `Window:ExportConfig()`, and `Window:ImportConfig(data)`. Executors with `writefile`/`readfile` support save JSON to `SingularityUI/<name>.json` or a flat fallback file. Loading a config updates both flags and visible controls, so script developers do not need to build a config saver every time.
 
