@@ -17,6 +17,8 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local LocalPlayer = Players.LocalPlayer
 local DEFAULT_TWEEN = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
@@ -39,6 +41,23 @@ local LucideTried = false
 local DecalTextureCache = {}
 
 Singularity.Themes = {
+    Dark = {
+        Window = Color3.fromRGB(8, 9, 11),
+        Topbar = Color3.fromRGB(13, 14, 17),
+        Sidebar = Color3.fromRGB(10, 11, 14),
+        Surface = Color3.fromRGB(15, 16, 20),
+        SurfaceHover = Color3.fromRGB(24, 26, 31),
+        Input = Color3.fromRGB(19, 21, 25),
+        Stroke = Color3.fromRGB(40, 43, 50),
+        Accent = Color3.fromRGB(105, 156, 255),
+        AccentDark = Color3.fromRGB(22, 34, 57),
+        Text = Color3.fromRGB(242, 244, 248),
+        Subtext = Color3.fromRGB(178, 186, 198),
+        Muted = Color3.fromRGB(115, 124, 137),
+        Success = Color3.fromRGB(75, 214, 139),
+        Warning = Color3.fromRGB(234, 181, 80),
+        Danger = Color3.fromRGB(255, 105, 117)
+    },
     Light = {
         Window = Color3.fromRGB(255, 255, 255),
         Topbar = Color3.fromRGB(250, 250, 250),
@@ -59,10 +78,11 @@ Singularity.Themes = {
 }
 
 Singularity.Themes.White = Singularity.Themes.Light
-Singularity.Themes.Singularity = Singularity.Themes.Light
-Singularity.Themes.Dark = Singularity.Themes.Light
-Singularity.Themes.SingularityDark = Singularity.Themes.Light
-Singularity.Themes.Reference = Singularity.Themes.Light
+Singularity.Themes.Singularity = Singularity.Themes.Dark
+Singularity.Themes.SingularityDark = Singularity.Themes.Dark
+Singularity.Themes["singularity-dark"] = Singularity.Themes.Dark
+Singularity.Themes["singularity-light"] = Singularity.Themes.Light
+Singularity.Themes.Reference = Singularity.Themes.Dark
 
 Singularity.Icons = {
     alert = "rbxassetid://73186275216515",
@@ -119,10 +139,15 @@ local function copy(source)
 end
 
 local function resolveTheme(theme)
-    local base = copy(Singularity.Themes.Light)
+    local base = copy(Singularity.Themes.Dark)
 
-    if typeof(theme) == "string" and Singularity.Themes[theme] then
-        return copy(Singularity.Themes[theme])
+    if typeof(theme) == "string" then
+        local key = string.lower(theme)
+        local selected = Singularity.Themes[theme] or Singularity.Themes[key]
+
+        if selected then
+            return copy(selected)
+        end
     end
 
     if typeof(theme) == "table" then
@@ -838,7 +863,7 @@ function Singularity:_ensureNotificationLayer()
         return self._notificationHolder
     end
 
-    local theme = self.Theme or resolveTheme("Singularity")
+    local theme = self.Theme or resolveTheme("singularity-dark")
 
     local gui = create("ScreenGui", {
         Name = "SingularityNotifications",
@@ -875,7 +900,7 @@ end
 function Singularity:Notify(options)
     options = normalizeOptions(options)
 
-    local theme = self._notificationTheme or self.Theme or resolveTheme("Singularity")
+    local theme = self._notificationTheme or self.Theme or resolveTheme("singularity-dark")
     local holder = self:_ensureNotificationLayer()
     local duration = options.Duration or 2.6
 
@@ -947,12 +972,13 @@ end
 function Singularity:CreateWindow(options)
     options = normalizeOptions(options)
 
-    local theme = resolveTheme(options.Theme or self.Theme or "Singularity")
+    local theme = resolveTheme(options.Theme or self.Theme or "singularity-dark")
     self.Theme = theme
 
     local window = setmetatable({
         Library = self,
         Theme = theme,
+        ThemeName = tostring(options.Theme or "singularity-dark"),
         Options = options,
         Tabs = {},
         Flags = {},
@@ -961,6 +987,10 @@ function Singularity:CreateWindow(options)
     }, Window)
 
     window:_build()
+
+    if options.BuiltInSettings ~= false then
+        window:_buildBuiltInSettings()
+    end
 
     if options.Notify ~= false then
         self:Notify({
@@ -982,6 +1012,22 @@ local function getViewportSize()
     end
 
     return Vector2.new(1280, 720)
+end
+
+local function resolveGameName(options)
+    if options.Game or options.GameName then
+        return tostring(options.Game or options.GameName)
+    end
+
+    local ok, info = pcall(function()
+        return MarketplaceService:GetProductInfo(game.PlaceId)
+    end)
+
+    if ok and typeof(info) == "table" and info.Name then
+        return tostring(info.Name)
+    end
+
+    return game.Name or "Universal"
 end
 
 local function resolveWindowSize(options)
@@ -1036,8 +1082,8 @@ end
 local function resolveMinimizedSize(options, windowSize)
     local viewport = getViewportSize()
     local requested = options.MinimizedWidth
-    local compactWidth = requested or (viewport.X <= 620 and 96 or 164)
-    local width = math.clamp(compactWidth, 88, math.max(88, windowSize.X.Offset))
+    local compactWidth = requested or 48
+    local width = math.clamp(compactWidth, 44, math.max(44, windowSize.X.Offset))
 
     return UDim2.fromOffset(width, 48)
 end
@@ -1106,12 +1152,12 @@ function Window:_build()
 
     local brandCard = create("Frame", {
         BackgroundColor3 = theme.Surface,
+        BackgroundTransparency = 1,
         BorderSizePixel = 0,
         Size = UDim2.new(1, 0, 0, 58),
         Parent = sidebar
     })
     addCorner(brandCard, 7)
-    addStroke(brandCard, theme.Stroke, 0.35)
 
     local logo = create("Frame", {
         BackgroundColor3 = theme.Input,
@@ -1160,12 +1206,13 @@ function Window:_build()
         })
     end
 
+    local gameName = resolveGameName(options)
     local title = makeText(brandCard, options.Title or "Singularity", 14, theme.Text, Enum.Font.GothamMedium, {
         Position = UDim2.fromOffset(54, 12),
         Size = UDim2.new(1, -62, 0, 18)
     })
 
-    local subtitle = makeText(brandCard, options.Subtitle or options.Game or "Singularity", 12, theme.Subtext, Enum.Font.Gotham, {
+    local subtitle = makeText(brandCard, options.Subtitle or gameName, 12, theme.Subtext, Enum.Font.Gotham, {
         Position = UDim2.fromOffset(54, 30),
         Size = UDim2.new(1, -62, 0, 16)
     })
@@ -1371,7 +1418,7 @@ function Window:_build()
         BackgroundColor3 = theme.Input,
         BorderSizePixel = 0,
         ClipsDescendants = true,
-        Position = UDim2.fromOffset(10, 8),
+        Position = UDim2.fromOffset(8, 8),
         Size = UDim2.fromOffset(32, 32),
         Visible = false,
         Parent = main
@@ -1449,16 +1496,24 @@ function Window:_build()
     self.Content = pageHolder
     self.OriginalSize = size
     self.MinimizedSize = resolveMinimizedSize(options, size)
+    self.SidebarWidth = sidebarWidth
     self.UserResized = false
 
     self:_makeDraggable(brandCard)
     self:_makeDraggable(dragHeader)
+    self:_makeDraggable(minimizedLogo)
     self:_makeResizable()
     self:_watchViewportSize()
     self:_applyResponsiveLayout(size)
 
     minimize.MouseButton1Click:Connect(function()
         self:SetMinimized(not self._minimized)
+    end)
+
+    minimizedLogo.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            self:SetMinimized(false)
+        end
     end)
 
     close.MouseButton1Click:Connect(function()
@@ -1584,9 +1639,10 @@ function Window:_updateResponsiveSize(animated)
 
     self.OriginalSize = size
     self.MinimizedSize = resolveMinimizedSize(self.Options, size)
+    self.SidebarWidth = sidebarWidth
 
     if self.SizeConstraint then
-        self.SizeConstraint.MinSize = self._minimized and Vector2.new(88, 48) or minSize
+        self.SizeConstraint.MinSize = self._minimized and Vector2.new(44, 48) or minSize
         self.SizeConstraint.MaxSize = maxSize
     end
 
@@ -1817,7 +1873,10 @@ function Window:SetMinimized(value)
     self.TopbarLine.Visible = not value
     self.SearchBox.Visible = not value and not isCompactWindowSize(self.OriginalSize)
     self.MinimizedLogo.Visible = value
-    self.MinimizedTitle.Visible = value and self.MinimizedSize.X.Offset > 160
+    self.MinimizedTitle.Visible = false
+    if self.Actions then
+        self.Actions.Visible = not value
+    end
     if self.ResizeHandle then
         self.ResizeHandle.Visible = not value
     end
@@ -1846,12 +1905,186 @@ function Window:Notify(options)
     return self.Library:Notify(options)
 end
 
+local function encodeConfigValue(value)
+    local valueType = typeof(value)
+
+    if valueType == "Color3" then
+        return {
+            Type = "Color3",
+            R = math.floor(value.R * 255 + 0.5),
+            G = math.floor(value.G * 255 + 0.5),
+            B = math.floor(value.B * 255 + 0.5)
+        }
+    elseif valueType == "EnumItem" then
+        return {
+            Type = "EnumItem",
+            EnumType = tostring(value.EnumType),
+            Name = value.Name
+        }
+    end
+
+    return value
+end
+
+local function decodeConfigValue(value)
+    if typeof(value) == "table" and value.Type == "Color3" then
+        return Color3.fromRGB(value.R or 255, value.G or 255, value.B or 255)
+    end
+
+    return value
+end
+
 function Window:GetFlag(flag)
     return self.Flags[flag]
 end
 
 function Window:SetFlag(flag, value)
     self.Flags[flag] = value
+end
+
+function Window:SetScale(scale)
+    scale = math.clamp(tonumber(scale) or resolveScale(self.Options), 0.55, 1.25)
+    self.Options.Scale = scale
+
+    if self.UIScale then
+        tween(self.UIScale, { Scale = scale }, DEFAULT_TWEEN)
+    end
+end
+
+function Window:SetSize(width, height)
+    width = tonumber(width) or self.OriginalSize.X.Offset
+    height = tonumber(height) or self.OriginalSize.Y.Offset
+
+    local _, minSize, maxSize = resolveWindowSize(self.Options)
+    width = math.clamp(width, minSize.X, maxSize.X)
+    height = math.clamp(height, minSize.Y, maxSize.Y)
+
+    self.UserResized = true
+    self.OriginalSize = UDim2.fromOffset(width, height)
+    self.Options.Size = self.OriginalSize
+    self:_updateResponsiveSize(true)
+end
+
+function Window:SetTheme(themeName)
+    self.ThemeName = tostring(themeName or "singularity-dark")
+    self.Theme = resolveTheme(self.ThemeName)
+    self.Library.Theme = self.Theme
+
+    if self.Main then
+        self.Main.BackgroundColor3 = self.Theme.Window
+    end
+
+    self:Notify({
+        Title = "Theme",
+        Content = "Theme saved. Reopen the UI to fully redraw controls.",
+        Duration = 2
+    })
+end
+
+function Window:ExportConfig()
+    local data = {
+        Flags = {},
+        UI = {
+            Theme = self.ThemeName or "singularity-dark",
+            Scale = self.UIScale and self.UIScale.Scale or resolveScale(self.Options),
+            Width = self.OriginalSize and self.OriginalSize.X.Offset or nil,
+            Height = self.OriginalSize and self.OriginalSize.Y.Offset or nil,
+            SidebarWidth = self.SidebarWidth
+        }
+    }
+
+    for key, value in pairs(self.Flags) do
+        data.Flags[key] = encodeConfigValue(value)
+    end
+
+    return data
+end
+
+function Window:ImportConfig(data)
+    if typeof(data) ~= "table" then
+        return false
+    end
+
+    if typeof(data.Flags) == "table" then
+        for key, value in pairs(data.Flags) do
+            self:SetFlag(key, decodeConfigValue(value))
+        end
+    end
+
+    if typeof(data.UI) == "table" then
+        if data.UI.Scale then
+            self:SetScale(data.UI.Scale)
+        end
+
+        if data.UI.Width or data.UI.Height then
+            self:SetSize(data.UI.Width or self.OriginalSize.X.Offset, data.UI.Height or self.OriginalSize.Y.Offset)
+        end
+    end
+
+    return true
+end
+
+function Window:SaveConfig(name)
+    name = tostring(name or self.Options.ConfigName or self.Options.Title or "Singularity")
+
+    if typeof(writefile) ~= "function" then
+        return false
+    end
+
+    local ok, encoded = pcall(function()
+        return HttpService:JSONEncode(self:ExportConfig())
+    end)
+
+    if not ok then
+        return false
+    end
+
+    local folderReady = false
+
+    pcall(function()
+        if typeof(makefolder) == "function" and typeof(isfolder) == "function" then
+            if not isfolder("SingularityUI") then
+                makefolder("SingularityUI")
+            end
+
+            folderReady = isfolder("SingularityUI")
+        end
+    end)
+
+    local path = folderReady and ("SingularityUI/" .. name .. ".json") or ("SingularityUI_" .. name .. ".json")
+    local wrote = pcall(function()
+        writefile(path, encoded)
+    end)
+
+    return wrote
+end
+
+function Window:LoadConfig(name)
+    name = tostring(name or self.Options.ConfigName or self.Options.Title or "Singularity")
+
+    if typeof(readfile) ~= "function" or typeof(isfile) ~= "function" then
+        return false
+    end
+
+    local path = "SingularityUI/" .. name .. ".json"
+
+    if not isfile(path) then
+        path = "SingularityUI_" .. name .. ".json"
+
+        if not isfile(path) then
+            return false
+        end
+    end
+
+    local ok, decoded = pcall(function()
+        return HttpService:JSONDecode(readfile(path))
+    end)
+
+    if not ok then
+        return false
+    end
+
+    return self:ImportConfig(decoded)
 end
 
 function Window:Tab(options)
@@ -1936,37 +2169,45 @@ function Window:_renderSegments(tab)
         tab.ActiveSegment = optionTitle(segments[1])
     end
 
+    local activeIndex = 1
+
     for index, segment in ipairs(segments) do
-        local label = optionTitle(segment)
-        local selected = label == tab.ActiveSegment
-        local button = create("TextButton", {
-            AutoButtonColor = false,
-            BackgroundColor3 = selected and self.Theme.SurfaceHover or self.Theme.Sidebar,
-            BackgroundTransparency = selected and 0 or 0.45,
-            BorderSizePixel = 0,
-            Font = Enum.Font.GothamBold,
-            LayoutOrder = index,
-            Text = label,
-            TextColor3 = selected and self.Theme.Text or self.Theme.Muted,
-            TextSize = 12,
-            Size = UDim2.fromOffset(math.max(52, (#label * 7) + 22), 28),
-            Parent = self.SegmentHolder
-        })
+        if optionTitle(segment) == tab.ActiveSegment then
+            activeIndex = index
+            break
+        end
+    end
 
-        addCorner(button, 7)
+    local label = optionTitle(segments[activeIndex])
+    local button = create("TextButton", {
+        AutoButtonColor = false,
+        BackgroundColor3 = self.Theme.SurfaceHover,
+        BackgroundTransparency = 0,
+        BorderSizePixel = 0,
+        Font = Enum.Font.GothamBold,
+        Text = ("%s  %d/%d"):format(label, activeIndex, #segments),
+        TextColor3 = self.Theme.Text,
+        TextSize = 12,
+        Size = UDim2.fromOffset(math.max(96, (#label * 7) + 46), 28),
+        Parent = self.SegmentHolder
+    })
+    addCorner(button, 7)
+    addStroke(button, self.Theme.Stroke, 0.8)
 
-        if selected then
-            addStroke(button, self.Theme.Stroke, 0.8)
+    button.MouseButton1Click:Connect(function()
+        press(button, button.Size)
+
+        activeIndex += 1
+
+        if activeIndex > #segments then
+            activeIndex = 1
         end
 
-        button.MouseButton1Click:Connect(function()
-            press(button, button.Size)
-            tab.ActiveSegment = label
-            self:_renderSegments(tab)
-            self:_applySearch(self.SearchInput and self.SearchInput.Text or "")
-            safeCall(tab.SegmentCallback, label)
-        end)
-    end
+        tab.ActiveSegment = optionTitle(segments[activeIndex])
+        self:_renderSegments(tab)
+        self:_applySearch(self.SearchInput and self.SearchInput.Text or "")
+        safeCall(tab.SegmentCallback, tab.ActiveSegment)
+    end)
 end
 
 function Window:_filterControls(controls, query, segment)
@@ -3117,6 +3358,95 @@ function Tab:Colorpicker(options)
     return object
 end
 
+function Window:_buildBuiltInSettings()
+    local settings = self:Tab({
+        Title = "UI",
+        Icon = "settings"
+    })
+    self._builtInSettingsTab = settings
+
+    settings:Paragraph({
+        Title = "Instructions",
+        Content = self.Options.Instructions or "Use these controls to adjust the interface, switch themes, and save or load a universal config."
+    })
+
+    settings:Dropdown({
+        Title = "Theme",
+        Values = { "singularity-dark", "singularity-light" },
+        Default = self.ThemeName or "singularity-dark",
+        Flag = "__ui_theme",
+        Callback = function(value)
+            self:SetTheme(value)
+        end
+    })
+
+    settings:Slider({
+        Title = "Scale",
+        Min = 55,
+        Max = 125,
+        Default = math.floor((self.UIScale and self.UIScale.Scale or resolveScale(self.Options)) * 100 + 0.5),
+        Suffix = "%",
+        Flag = "__ui_scale",
+        Callback = function(value)
+            self:SetScale(value / 100)
+        end
+    })
+
+    settings:Slider({
+        Title = "Width",
+        Min = 540,
+        Max = 900,
+        Default = self.OriginalSize.X.Offset,
+        Flag = "__ui_width",
+        Callback = function(value)
+            self:SetSize(value, self.OriginalSize.Y.Offset)
+        end
+    })
+
+    settings:Slider({
+        Title = "Height",
+        Min = 320,
+        Max = 600,
+        Default = self.OriginalSize.Y.Offset,
+        Flag = "__ui_height",
+        Callback = function(value)
+            self:SetSize(self.OriginalSize.X.Offset, value)
+        end
+    })
+
+    settings:Button({
+        Title = "Save Universal Config",
+        Callback = function()
+            local saved = self:SaveConfig()
+            self:Notify({
+                Title = saved and "Config saved" or "Config unavailable",
+                Content = saved and "Saved to SingularityUI config storage." or "This executor does not expose writefile/readfile.",
+                Duration = 2
+            })
+        end
+    })
+
+    settings:Button({
+        Title = "Load Universal Config",
+        Callback = function()
+            local loaded = self:LoadConfig()
+            self:Notify({
+                Title = loaded and "Config loaded" or "Config unavailable",
+                Content = loaded and "Loaded saved flags and UI values." or "No readable config was found.",
+                Duration = 2
+            })
+        end
+    })
+
+    if settings.Page then
+        settings.Page.Visible = false
+    end
+
+    if self.ActiveTab == settings then
+        self.ActiveTab = nil
+    end
+end
+
 Tab.CreateSection = Tab.Section
 Tab.CreateGroup = Tab.Group
 Tab.CreateParagraph = Tab.Paragraph
@@ -3128,6 +3458,6 @@ Tab.CreateDropdown = Tab.Dropdown
 Tab.CreateKeybind = Tab.Keybind
 Tab.CreateColorpicker = Tab.Colorpicker
 
-Singularity.Theme = resolveTheme("Singularity")
+Singularity.Theme = resolveTheme("singularity-dark")
 
 return Singularity

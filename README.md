@@ -17,9 +17,9 @@ local Singularity = require(game:GetService("ReplicatedStorage"):WaitForChild("S
 
 local Window = Singularity:CreateWindow({
     Title = "Singularity",
-    Subtitle = "Singularity",
-    Theme = "Singularity",
+    Theme = "singularity-dark",
     Logo = 73636428262287,
+    Game = "Universal",
     SearchPlaceholder = "Search modules",
     Profile = {
         Enabled = true
@@ -130,6 +130,8 @@ The top search box filters the active page by group/control title, description, 
 
 ## Themes
 
-The library is designed around one white theme: `Singularity`. Use `Theme = "Singularity"` or omit the theme option.
+The default theme is `singularity-dark`. The built-in UI settings tab also includes a theme dropdown for `singularity-dark` and `singularity-light`.
+
+Universal config helpers are built in: `Window:SaveConfig(name)`, `Window:LoadConfig(name)`, `Window:ExportConfig()`, and `Window:ImportConfig(data)`. Executors with `writefile`/`readfile` support save to `SingularityUI/<name>.json` or a flat fallback file.
 
 You can still pass a custom theme table into `CreateWindow({ Theme = { ... } })` if you want to override the defaults.

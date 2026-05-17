@@ -28,9 +28,9 @@ Singularity.UseLucide = true
 
 local Window = Singularity:CreateWindow({
     Title = "Singularity",
-    Subtitle = "v0.0.1",
-    Theme = "Singularity",
+    Theme = "singularity-dark",
     Logo = 73636428262287,
+    Game = "Universal",
     NavigationTitle = "Combat",
     SearchPlaceholder = "Search modules",
     Profile = {
