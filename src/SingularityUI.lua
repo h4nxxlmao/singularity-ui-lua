@@ -49,39 +49,20 @@ Singularity.Themes = {
         SurfaceHover = Color3.fromRGB(24, 26, 31),
         Input = Color3.fromRGB(19, 21, 25),
         Stroke = Color3.fromRGB(40, 43, 50),
-        Accent = Color3.fromRGB(105, 156, 255),
-        AccentDark = Color3.fromRGB(22, 34, 57),
+        Accent = Color3.fromRGB(255, 255, 255),
+        AccentDark = Color3.fromRGB(38, 40, 46),
         Text = Color3.fromRGB(242, 244, 248),
         Subtext = Color3.fromRGB(178, 186, 198),
         Muted = Color3.fromRGB(115, 124, 137),
         Success = Color3.fromRGB(75, 214, 139),
         Warning = Color3.fromRGB(234, 181, 80),
         Danger = Color3.fromRGB(255, 105, 117)
-    },
-    Light = {
-        Window = Color3.fromRGB(255, 255, 255),
-        Topbar = Color3.fromRGB(250, 250, 250),
-        Sidebar = Color3.fromRGB(248, 248, 248),
-        Surface = Color3.fromRGB(255, 255, 255),
-        SurfaceHover = Color3.fromRGB(241, 243, 245),
-        Input = Color3.fromRGB(246, 247, 248),
-        Stroke = Color3.fromRGB(218, 223, 228),
-        Accent = Color3.fromRGB(92, 148, 255),
-        AccentDark = Color3.fromRGB(235, 242, 255),
-        Text = Color3.fromRGB(21, 25, 31),
-        Subtext = Color3.fromRGB(82, 92, 104),
-        Muted = Color3.fromRGB(133, 143, 153),
-        Success = Color3.fromRGB(28, 150, 92),
-        Warning = Color3.fromRGB(190, 132, 28),
-        Danger = Color3.fromRGB(218, 56, 68)
     }
 }
 
-Singularity.Themes.White = Singularity.Themes.Light
 Singularity.Themes.Singularity = Singularity.Themes.Dark
 Singularity.Themes.SingularityDark = Singularity.Themes.Dark
 Singularity.Themes["singularity-dark"] = Singularity.Themes.Dark
-Singularity.Themes["singularity-light"] = Singularity.Themes.Light
 Singularity.Themes.Reference = Singularity.Themes.Dark
 
 Singularity.Icons = {
@@ -988,9 +969,7 @@ function Singularity:CreateWindow(options)
 
     window:_build()
 
-    if options.BuiltInSettings ~= false then
-        window:_buildBuiltInSettings()
-    end
+    window:_buildBuiltInSettings()
 
     if options.Notify ~= false then
         self:Notify({
@@ -1080,12 +1059,7 @@ local function isCompactWindowSize(windowSize)
 end
 
 local function resolveMinimizedSize(options, windowSize)
-    local viewport = getViewportSize()
-    local requested = options.MinimizedWidth
-    local compactWidth = requested or 48
-    local width = math.clamp(compactWidth, 44, math.max(44, windowSize.X.Offset))
-
-    return UDim2.fromOffset(width, 48)
+    return UDim2.fromOffset(48, 48)
 end
 
 local function resolveScale(options)
@@ -1125,7 +1099,7 @@ function Window:_build()
         Parent = screenGui
     })
     addCorner(main, 8)
-    addStroke(main, theme.Stroke, 0.08)
+    local mainStroke = addStroke(main, theme.Stroke, 0.08)
 
     if options.Acrylic == true then
         main.BackgroundTransparency = 0.04
@@ -1160,14 +1134,13 @@ function Window:_build()
     addCorner(brandCard, 7)
 
     local logo = create("Frame", {
-        BackgroundColor3 = theme.Input,
+        BackgroundTransparency = 1,
         BorderSizePixel = 0,
         Position = UDim2.fromOffset(10, 10),
         Size = UDim2.fromOffset(36, 36),
         Parent = brandCard
     })
     addCorner(logo, 8)
-    addStroke(logo, theme.Stroke, 0.35)
 
     local logoId = firstDefined(options.Logo, DEFAULT_LOGO)
 
@@ -1183,7 +1156,7 @@ function Window:_build()
             ImageColor3 = Color3.new(1, 1, 1),
             Position = UDim2.fromScale(0.5, 0.5),
             ScaleType = Enum.ScaleType.Fit,
-            Size = UDim2.fromOffset(26, 26),
+            Size = UDim2.fromOffset(30, 30),
             Parent = logo
         })
 
@@ -1269,7 +1242,7 @@ function Window:_build()
     end
 
     local avatar = create("Frame", {
-        BackgroundColor3 = theme.Input,
+        BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ClipsDescendants = true,
         Position = UDim2.fromOffset(10, 9),
@@ -1424,7 +1397,6 @@ function Window:_build()
         Parent = main
     })
     addCorner(minimizedLogo, 9)
-    addStroke(minimizedLogo, theme.Stroke, 0.35)
 
     if logoId ~= false then
         local miniFallback = makeText(minimizedLogo, "S", 17, theme.Text, Enum.Font.GothamBold, {
@@ -1467,6 +1439,7 @@ function Window:_build()
 
     self.ScreenGui = screenGui
     self.Main = main
+    self.MainStroke = mainStroke
     self.UIScale = uiScale
     self.Topbar = dragHeader
     self.BrandCard = brandCard
@@ -1883,7 +1856,14 @@ function Window:SetMinimized(value)
 
     self:_updateResponsiveSize(false)
 
+    if self.MainStroke then
+        tween(self.MainStroke, {
+            Transparency = value and 1 or 0.08
+        }, SLOW_TWEEN)
+    end
+
     tween(self.Main, {
+        BackgroundTransparency = value and 1 or (self.Options.Acrylic == true and 0.04 or 0),
         Size = value and self.MinimizedSize or self.OriginalSize
     }, SLOW_TWEEN)
 end
@@ -3367,17 +3347,7 @@ function Window:_buildBuiltInSettings()
 
     settings:Paragraph({
         Title = "Instructions",
-        Content = self.Options.Instructions or "Use these controls to adjust the interface, switch themes, and save or load a universal config."
-    })
-
-    settings:Dropdown({
-        Title = "Theme",
-        Values = { "singularity-dark", "singularity-light" },
-        Default = self.ThemeName or "singularity-dark",
-        Flag = "__ui_theme",
-        Callback = function(value)
-            self:SetTheme(value)
-        end
+        Content = self.Options.Instructions or "Use these static controls to adjust the interface and save or load a universal config."
     })
 
     settings:Slider({

@@ -31,234 +31,240 @@ local Window = Singularity:CreateWindow({
     Theme = "singularity-dark",
     Logo = 73636428262287,
     Game = "Universal",
-    NavigationTitle = "Combat",
+    NavigationTitle = "Pages",
     SearchPlaceholder = "Search modules",
     Profile = {
         Enabled = true
     },
-    Size = UDim2.fromOffset(680, 410),
-    MinimizedWidth = 104,
+    Instructions = "This page is built in. Use the sample pages to test every control type.",
+    Size = UDim2.fromOffset(700, 430),
     ToggleKey = Enum.KeyCode.RightShift
 })
 
-local Page = Window:Tab({
-    Title = "Page",
+local Main = Window:Tab({
+    Title = "Main",
     Icon = "layout-dashboard",
-    Segments = { "Combat", "Weapon", "FoV" }
+    Segments = { "Combat", "Movement", "Visuals" }
 })
 
-local Settings = Window:Tab({
-    Title = "Settings",
+local Config = Window:Tab({
+    Title = "Config",
     Icon = "settings",
-    Segments = { "Config", "Theme", "Profile" }
+    Segments = { "Profiles", "Keys", "Info" }
 })
 
-local Aimbot = Page:Group({
-    Title = "Aimbot",
+local Misc = Window:Tab({
+    Title = "Misc",
+    Icon = "star",
+    Segments = { "Utility", "Colors", "Text" }
+})
+
+local Combat = Main:Group({
+    Title = "Combat",
     Icon = "crosshair",
-    Height = 260,
+    Height = 265,
     Segment = "Combat"
 })
 
-Aimbot:Toggle({
-    Title = "Toggle",
-    Default = false,
-    Flag = "Enabled",
+Combat:Paragraph({
+    Title = "Paragraph",
+    Content = "Developer instructions or module notes can live here."
+})
+
+Combat:Toggle({
+    Title = "Enabled",
+    Default = true,
+    Flag = "combat_enabled",
     Callback = function(value)
-        print("Toggle:", value)
+        print("combat_enabled", value)
     end
 })
 
-Aimbot:Button({
-    Title = "Click Me",
+Combat:Slider({
+    Title = "Aim Strength",
+    Min = 0,
+    Max = 100,
+    Default = 45,
+    Suffix = "%",
+    Flag = "aim_strength"
+})
+
+Combat:Dropdown({
+    Title = "Target Mode",
+    Values = { "Closest", "Lowest HP", "Mouse" },
+    Default = "Closest",
+    Flag = "target_mode"
+})
+
+Combat:Button({
+    Title = "Test Notify",
     Callback = function()
         Window:Notify({
             Title = "Singularity",
-            Content = "Button callback fired.",
-            Duration = 3
-        })
-    end
-})
-
-Aimbot:Slider({
-    Title = "Slider",
-    Min = 0,
-    Max = 100,
-    Default = 50,
-    Step = 1,
-    Suffix = "%",
-    Flag = "Slider",
-    Callback = function(value)
-        print("Slider:", value)
-    end
-})
-
-Aimbot:Dropdown({
-    Title = "Dropdown",
-    Values = { "Option 1", "Option 2", "Option 3" },
-    Default = "Option 2",
-    Flag = "Dropdown",
-    Callback = function(value)
-        print("Dropdown:", value)
-    end
-})
-
-Aimbot:Toggle({
-    Title = "Label",
-    Default = true,
-    Flag = "LabelToggle"
-})
-
-Aimbot:Keybind({
-    Title = "Label",
-    Default = Enum.KeyCode.E,
-    Flag = "LabelKey"
-})
-
-Aimbot:Input({
-    Title = "Text",
-    Default = "Text",
-    Flag = "Text"
-})
-
-local Weapon = Page:Group({
-    Title = "Weapon",
-    Icon = "weapon",
-    Height = 180,
-    Segment = "Weapon"
-})
-
-Weapon:Dropdown({
-    Title = "Weapon Mode",
-    Values = { "Primary", "Secondary", "Auto" },
-    Default = "Auto",
-    Flag = "WeaponMode"
-})
-
-Weapon:Slider({
-    Title = "Recoil",
-    Min = 0,
-    Max = 100,
-    Default = 25,
-    Suffix = "%",
-    Flag = "Recoil"
-})
-
-Weapon:Toggle({
-    Title = "Auto Reload",
-    Default = true,
-    Flag = "AutoReload"
-})
-
-local Fov = Page:Group({
-    Title = "FoV",
-    Icon = "scan",
-    Height = 150,
-    Segment = "FoV"
-})
-
-Fov:Slider({
-    Title = "Radius",
-    Min = 20,
-    Max = 300,
-    Default = 120,
-    Flag = "FovRadius"
-})
-
-Fov:Toggle({
-    Title = "Draw Circle",
-    Default = true,
-    Flag = "DrawFov"
-})
-
-local Config = Settings:Group({
-    Title = "Config",
-    Icon = "settings",
-    Height = 260,
-    Segment = "Config"
-})
-
-Config:Input({
-    Title = "Username",
-    Placeholder = "Name",
-    Default = "Singularity",
-    Flag = "Username",
-    Callback = function(value)
-        print("Username:", value)
-    end
-})
-
-Config:Dropdown({
-    Title = "Preset",
-    Values = { "Default", "Legit", "Rage" },
-    Default = "Default",
-    Flag = "Preset"
-})
-
-Config:Keybind({
-    Title = "Action Key",
-    Default = Enum.KeyCode.F,
-    Callback = function()
-        Window:Notify({
-            Title = "Keybind",
-            Content = "Action key pressed.",
+            Content = "Button callback works.",
             Duration = 2
         })
     end
 })
 
-Config:Toggle({
-    Title = "Notifications",
-    Default = true,
-    Flag = "Notifications"
+local Movement = Main:Group({
+    Title = "Movement",
+    Icon = "gamepad",
+    Height = 210,
+    Segment = "Movement"
 })
 
-Config:Button({
+Movement:Toggle({
+    Title = "Sprint",
+    Default = false,
+    Flag = "sprint"
+})
+
+Movement:Slider({
+    Title = "Walkspeed",
+    Min = 16,
+    Max = 100,
+    Default = 24,
+    Flag = "walkspeed"
+})
+
+Movement:Keybind({
+    Title = "Dash Key",
+    Default = Enum.KeyCode.Q,
+    Flag = "dash_key",
+    Callback = function()
+        print("dash")
+    end
+})
+
+local Visuals = Main:Group({
+    Title = "Visuals",
+    Icon = "eyes",
+    Height = 210,
+    Segment = "Visuals"
+})
+
+Visuals:Toggle({
+    Title = "ESP",
+    Default = true,
+    Flag = "esp"
+})
+
+Visuals:Colorpicker({
+    Title = "ESP Color",
+    Default = Color3.fromRGB(255, 255, 255),
+    Flag = "esp_color"
+})
+
+local Profiles = Config:Group({
+    Title = "Profiles",
+    Icon = "folder",
+    Height = 230,
+    Segment = "Profiles"
+})
+
+Profiles:Input({
+    Title = "Config Name",
+    Placeholder = "Default",
+    Default = "Default",
+    Flag = "config_name"
+})
+
+Profiles:Button({
     Title = "Save Config",
     Callback = function()
-        Window:Notify({
-            Title = "Saved",
-            Content = "Config values stored in flags.",
-            Duration = 2
-        })
+        Window:SaveConfig(Window:GetFlag("config_name") or "Default")
     end
 })
 
-local ThemeGroup = Settings:Group({
-    Title = "Theme",
-    Icon = "palette",
-    Height = 110,
-    Segment = "Theme"
-})
-
-ThemeGroup:Slider({
-    Title = "Scale",
-    Min = 80,
-    Max = 110,
-    Default = 94,
-    Suffix = "%",
-    Flag = "Scale"
-})
-
-local ProfileGroup = Settings:Group({
-    Title = "Profile",
-    Icon = "user",
-    Height = 150,
-    Segment = "Profile"
-})
-
-ProfileGroup:Paragraph({
-    Title = "Roblox Profile",
-    Content = "The sidebar card automatically uses your DisplayName, username, and headshot."
-})
-
-ProfileGroup:Button({
-    Title = "Show Profile Toast",
+Profiles:Button({
+    Title = "Load Config",
     Callback = function()
-        Window:Notify({
-            Title = "Profile",
-            Content = "Roblox profile loaded.",
-            Duration = 2
-        })
+        Window:LoadConfig(Window:GetFlag("config_name") or "Default")
     end
+})
+
+local Keys = Config:Group({
+    Title = "Keys",
+    Icon = "settings",
+    Height = 170,
+    Segment = "Keys"
+})
+
+Keys:Keybind({
+    Title = "Open UI",
+    Default = Enum.KeyCode.RightShift,
+    Flag = "open_ui_key"
+})
+
+Keys:Keybind({
+    Title = "Action",
+    Default = Enum.KeyCode.F,
+    Flag = "action_key"
+})
+
+local Info = Config:Group({
+    Title = "Info",
+    Icon = "question",
+    Height = 170,
+    Segment = "Info"
+})
+
+Info:Paragraph({
+    Title = "Universal Config",
+    Content = "The library has built-in static UI settings and config save/load helpers."
+})
+
+local Utility = Misc:Group({
+    Title = "Utility",
+    Icon = "plug",
+    Height = 200,
+    Segment = "Utility"
+})
+
+Utility:Dropdown({
+    Title = "Multi Dropdown",
+    Multi = true,
+    Values = { "A", "B", "C" },
+    Default = { "A", "C" },
+    Flag = "multi_dropdown"
+})
+
+Utility:Button({
+    Title = "Minimize",
+    Callback = function()
+        Window:SetMinimized(true)
+    end
+})
+
+local Colors = Misc:Group({
+    Title = "Colors",
+    Icon = "palette",
+    Height = 150,
+    Segment = "Colors"
+})
+
+Colors:Colorpicker({
+    Title = "Accent Preview",
+    Default = Color3.fromRGB(255, 255, 255),
+    Flag = "accent_preview"
+})
+
+local Text = Misc:Group({
+    Title = "Text",
+    Icon = "page",
+    Height = 180,
+    Segment = "Text"
+})
+
+Text:Input({
+    Title = "Input",
+    Placeholder = "Type here",
+    Default = "Hello",
+    Flag = "sample_input"
+})
+
+Text:Paragraph({
+    Title = "Long Paragraph",
+    Content = "Paragraph controls wrap text and are intended for developer instructions, warnings, or notes."
 })

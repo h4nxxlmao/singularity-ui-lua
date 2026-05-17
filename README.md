@@ -1,6 +1,6 @@
 # Singularity UI Lua
 
-A custom Roblox Luau UI library with a tight white Singularity style: draggable/resizable responsive window, logo brand rail, desktop search, mobile-friendly compact navigation, segmented page tabs, grouped controls, slider toggles, flags, keybinds, animations, and minimalist toast notifications.
+A custom Roblox Luau UI library with a tight dark Singularity style: draggable/resizable responsive window, logo brand rail, desktop search, mobile-friendly compact navigation, paginated page segments, grouped controls, slider toggles, flags, keybinds, static UI settings, config helpers, animations, and minimalist toast notifications.
 
 ## Files
 
@@ -25,7 +25,6 @@ local Window = Singularity:CreateWindow({
         Enabled = true
     },
     Size = UDim2.fromOffset(680, 410),
-    MinimizedWidth = 104,
     ToggleKey = Enum.KeyCode.RightShift
 })
 
@@ -130,7 +129,7 @@ The top search box filters the active page by group/control title, description, 
 
 ## Themes
 
-The default theme is `singularity-dark`. The built-in UI settings tab also includes a theme dropdown for `singularity-dark` and `singularity-light`.
+The default and only built-in theme is `singularity-dark`. The static built-in `UI` settings tab is always created and includes scale, width, height, save config, and load config controls.
 
 Universal config helpers are built in: `Window:SaveConfig(name)`, `Window:LoadConfig(name)`, `Window:ExportConfig()`, and `Window:ImportConfig(data)`. Executors with `writefile`/`readfile` support save to `SingularityUI/<name>.json` or a flat fallback file.
 
