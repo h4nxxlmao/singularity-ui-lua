@@ -37,6 +37,7 @@ local Window = Singularity:CreateWindow({
         Enabled = true
     },
     Size = UDim2.fromOffset(760, 480),
+    MinimizedWidth = 118,
     ToggleKey = Enum.KeyCode.RightShift
 })
 

@@ -1,6 +1,6 @@
 # Singularity UI Lua
 
-A custom Roblox Luau UI library with a compact black-and-white Singularity Dark style: draggable/resizable window, logo brand card, top search bar, profile sidebar card, segmented page tabs, grouped controls, flags, keybinds, animations, and minimalist toast notifications.
+A custom Roblox Luau UI library with a compact Singularity style: draggable/resizable responsive window, logo brand rail, desktop search, mobile-friendly compact navigation, segmented page tabs, grouped controls, slider toggles, flags, keybinds, animations, and minimalist toast notifications.
 
 ## Files
 
@@ -17,7 +17,7 @@ local Singularity = require(game:GetService("ReplicatedStorage"):WaitForChild("S
 
 local Window = Singularity:CreateWindow({
     Title = "Singularity",
-    Subtitle = "Singularity - Dark",
+    Subtitle = "Singularity",
     Theme = "Singularity",
     Logo = 77666858594516,
     SearchPlaceholder = "Search modules",
@@ -25,6 +25,7 @@ local Window = Singularity:CreateWindow({
         Enabled = true
     },
     Size = UDim2.fromOffset(760, 480),
+    MinimizedWidth = 118,
     ToggleKey = Enum.KeyCode.RightShift
 })
 
@@ -123,12 +124,12 @@ Singularity.UseLucide = false
 
 The sidebar profile card loads the local Roblox profile by default when `Profile.Enabled` is not `false`: DisplayName, `@username`, and headshot avatar.
 
-Touch devices use a smaller automatic scale by default. Override it with `MobileScale = 0.72`, or pass `Scale = 0.94` to force one scale everywhere.
+Touch devices use a smaller automatic scale by default. Override it with `MobileScale = 0.82`, or pass `Scale = 0.94` to force one scale everywhere.
 
 The top search box filters the active page by group/control title, description, flag, and placeholder text.
 
 ## Themes
 
-The library is designed around one theme: `Singularity - Dark`. Use `Theme = "Singularity"` or omit the theme option.
+The library is designed around one theme: `Singularity`. Use `Theme = "Singularity"` or omit the theme option.
 
-You can still pass a custom theme table into `CreateWindow({ Theme = { ... } })` if you want to override the black-and-white defaults.
+You can still pass a custom theme table into `CreateWindow({ Theme = { ... } })` if you want to override the defaults.

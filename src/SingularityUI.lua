@@ -1,6 +1,6 @@
 --[[
     Singularity UI
-    A compact WindUI-inspired Roblox Luau interface library.
+    A compact Roblox Luau interface library with its own Singularity visual system.
 
     This file is self-contained and can be used as a ModuleScript or through
     loadstring(game:HttpGet(...))().
@@ -39,21 +39,21 @@ local LucideTried = false
 
 Singularity.Themes = {
     Dark = {
-        Window = Color3.fromRGB(5, 5, 5),
-        Topbar = Color3.fromRGB(10, 10, 10),
-        Sidebar = Color3.fromRGB(7, 7, 7),
-        Surface = Color3.fromRGB(12, 12, 12),
-        SurfaceHover = Color3.fromRGB(22, 22, 22),
-        Input = Color3.fromRGB(17, 17, 17),
-        Stroke = Color3.fromRGB(42, 42, 42),
-        Accent = Color3.fromRGB(245, 245, 245),
-        AccentDark = Color3.fromRGB(32, 32, 32),
-        Text = Color3.fromRGB(248, 248, 248),
-        Subtext = Color3.fromRGB(205, 205, 205),
-        Muted = Color3.fromRGB(145, 145, 145),
-        Success = Color3.fromRGB(235, 235, 235),
-        Warning = Color3.fromRGB(210, 210, 210),
-        Danger = Color3.fromRGB(245, 245, 245)
+        Window = Color3.fromRGB(8, 12, 14),
+        Topbar = Color3.fromRGB(13, 19, 22),
+        Sidebar = Color3.fromRGB(10, 15, 18),
+        Surface = Color3.fromRGB(15, 22, 25),
+        SurfaceHover = Color3.fromRGB(24, 34, 38),
+        Input = Color3.fromRGB(11, 17, 20),
+        Stroke = Color3.fromRGB(39, 57, 62),
+        Accent = Color3.fromRGB(71, 235, 202),
+        AccentDark = Color3.fromRGB(18, 72, 68),
+        Text = Color3.fromRGB(235, 246, 244),
+        Subtext = Color3.fromRGB(163, 184, 181),
+        Muted = Color3.fromRGB(103, 124, 122),
+        Success = Color3.fromRGB(83, 230, 154),
+        Warning = Color3.fromRGB(246, 199, 94),
+        Danger = Color3.fromRGB(255, 105, 117)
     }
 }
 
@@ -923,8 +923,10 @@ local function resolveWindowSize(options)
     local maxHeight = math.max(300, viewport.Y - (margin * 2))
     local constraintMaxWidth = math.min(options.MaxWidth or 980, maxWidth)
     local constraintMaxHeight = math.min(options.MaxHeight or 680, maxHeight)
-    local constraintMinWidth = math.min(options.MinWidth or 560, constraintMaxWidth)
-    local constraintMinHeight = math.min(options.MinHeight or 360, constraintMaxHeight)
+    local defaultMinWidth = viewport.X <= 620 and 320 or 560
+    local defaultMinHeight = viewport.Y <= 520 and 300 or 360
+    local constraintMinWidth = math.min(options.MinWidth or defaultMinWidth, constraintMaxWidth)
+    local constraintMinHeight = math.min(options.MinHeight or defaultMinHeight, constraintMaxHeight)
     local width = math.clamp(requestedWidth, constraintMinWidth, constraintMaxWidth)
     local height = math.clamp(requestedHeight, constraintMinHeight, constraintMaxHeight)
 
@@ -938,13 +940,26 @@ local function resolveSidebarWidth(options, windowSize)
         return math.min(options.SidebarWidth, math.max(150, windowSize.X.Offset - 210))
     end
 
-    if windowSize.X.Offset <= 430 then
-        return 150
-    elseif windowSize.X.Offset <= 560 then
+    if windowSize.X.Offset <= 620 then
+        return 76
+    elseif windowSize.X.Offset <= 720 then
         return 180
     end
 
     return 230
+end
+
+local function isCompactWindowSize(windowSize)
+    return windowSize.X.Offset <= 620
+end
+
+local function resolveMinimizedSize(options, windowSize)
+    local viewport = getViewportSize()
+    local requested = options.MinimizedWidth
+    local compactWidth = requested or (viewport.X <= 620 and 118 or 220)
+    local width = math.clamp(compactWidth, 96, math.max(96, windowSize.X.Offset))
+
+    return UDim2.fromOffset(width, 54)
 end
 
 local function resolveScale(options)
@@ -953,7 +968,7 @@ local function resolveScale(options)
     end
 
     if UserInputService.TouchEnabled then
-        return options.MobileScale or 0.72
+        return options.MobileScale or 0.82
     end
 
     return 0.94
@@ -1070,12 +1085,12 @@ function Window:_build()
         Size = UDim2.new(1, -92, 0, 20)
     })
 
-    makeText(brandCard, options.Subtitle or options.Game or "Singularity - Dark", 13, theme.Subtext, Enum.Font.Gotham, {
+    local subtitle = makeText(brandCard, options.Subtitle or options.Game or "Singularity", 13, theme.Subtext, Enum.Font.Gotham, {
         Position = UDim2.fromOffset(78, 39),
         Size = UDim2.new(1, -92, 0, 18)
     })
 
-    makeText(sidebar, options.NavigationTitle or "Pages", 12, theme.Muted, Enum.Font.GothamMedium, {
+    local navigationLabel = makeText(sidebar, options.NavigationTitle or "Pages", 12, theme.Muted, Enum.Font.GothamMedium, {
         Position = UDim2.fromOffset(2, 92),
         Size = UDim2.new(1, -4, 0, 18)
     })
@@ -1145,12 +1160,12 @@ function Window:_build()
         avatarIcon.ImageColor3 = Color3.new(1, 1, 1)
     end
 
-    makeText(footer, profileName or options.FooterTitle or "User", 12, theme.Text, Enum.Font.GothamMedium, {
+    local profileNameLabel = makeText(footer, profileName or options.FooterTitle or "User", 12, theme.Text, Enum.Font.GothamMedium, {
         Position = UDim2.fromOffset(62, 14),
         Size = UDim2.new(1, -78, 0, 18)
     })
 
-    makeText(footer, profileRole or options.FooterText or "Singularity - Dark", 11, theme.Subtext, Enum.Font.Gotham, {
+    local profileRoleLabel = makeText(footer, profileRole or options.FooterText or "Singularity", 11, theme.Subtext, Enum.Font.Gotham, {
         Position = UDim2.fromOffset(62, 33),
         Size = UDim2.new(1, -78, 0, 16)
     })
@@ -1272,9 +1287,54 @@ function Window:_build()
     local minimize = self:_topButton(actions, "minus", theme.Subtext)
     local close = self:_topButton(actions, "x", theme.Danger)
 
+    local minimizedLogo = create("Frame", {
+        BackgroundColor3 = theme.AccentDark,
+        BorderSizePixel = 0,
+        ClipsDescendants = true,
+        Position = UDim2.fromOffset(14, 11),
+        Size = UDim2.fromOffset(32, 32),
+        Visible = false,
+        Parent = main
+    })
+    addCorner(minimizedLogo, 9)
+    addStroke(minimizedLogo, theme.Stroke, 0.35)
+
+    if logoId ~= false then
+        local miniFallback = makeText(minimizedLogo, "S", 17, theme.Text, Enum.Font.GothamBold, {
+            Size = UDim2.fromScale(1, 1),
+            TextXAlignment = Enum.TextXAlignment.Center
+        })
+
+        local miniLogoImage = create("ImageLabel", {
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            BackgroundTransparency = 1,
+            Image = assetThumbnail(logoId),
+            ImageColor3 = Color3.new(1, 1, 1),
+            Position = UDim2.fromScale(0.5, 0.5),
+            ScaleType = Enum.ScaleType.Fit,
+            Size = UDim2.fromOffset(22, 22),
+            Parent = minimizedLogo
+        })
+
+        miniLogoImage:GetPropertyChangedSignal("IsLoaded"):Connect(function()
+            if miniLogoImage.IsLoaded and miniFallback then
+                miniFallback.Visible = false
+            end
+        end)
+
+        if miniLogoImage.IsLoaded then
+            miniFallback.Visible = false
+        end
+    else
+        makeText(minimizedLogo, "S", 17, theme.Text, Enum.Font.GothamBold, {
+            Size = UDim2.fromScale(1, 1),
+            TextXAlignment = Enum.TextXAlignment.Center
+        })
+    end
+
     local minimizedTitle = makeText(main, options.Title or "Singularity", 14, theme.Text, Enum.Font.GothamMedium, {
-        Position = UDim2.fromOffset(18, 14),
-        Size = UDim2.new(1, -250, 0, 24)
+        Position = UDim2.fromOffset(56, 14),
+        Size = UDim2.new(1, -138, 0, 24)
     })
     minimizedTitle.Visible = false
 
@@ -1282,7 +1342,16 @@ function Window:_build()
     self.Main = main
     self.UIScale = uiScale
     self.Topbar = dragHeader
+    self.BrandCard = brandCard
+    self.BrandLogo = logo
     self.TitleLabel = title
+    self.SubtitleLabel = subtitle
+    self.NavigationLabel = navigationLabel
+    self.Footer = footer
+    self.ProfileAvatar = avatar
+    self.ProfileNameLabel = profileNameLabel
+    self.ProfileRoleLabel = profileRoleLabel
+    self.MinimizedLogo = minimizedLogo
     self.MinimizedTitle = minimizedTitle
     self.SearchBox = searchFrame
     self.SearchInput = search
@@ -1291,6 +1360,7 @@ function Window:_build()
     self.TopbarLine = divider
     self.MinimizeButton = minimize
     self.CloseButton = close
+    self.Actions = actions
     self.SizeConstraint = sizeConstraint
     self.Sidebar = sidebar
     self.SidebarLine = divider
@@ -1298,13 +1368,14 @@ function Window:_build()
     self.ContentShell = contentShell
     self.Content = pageHolder
     self.OriginalSize = size
-    self.MinimizedSize = UDim2.fromOffset(size.X.Offset, 54)
+    self.MinimizedSize = resolveMinimizedSize(options, size)
     self.UserResized = false
 
     self:_makeDraggable(brandCard)
     self:_makeDraggable(dragHeader)
     self:_makeResizable()
     self:_watchViewportSize()
+    self:_applyResponsiveLayout(size)
 
     minimize.MouseButton1Click:Connect(function()
         self:SetMinimized(not self._minimized)
@@ -1335,6 +1406,93 @@ function Window:_build()
     }, SLOW_TWEEN)
 end
 
+function Window:_applyResponsiveLayout(size)
+    local compact = isCompactWindowSize(size)
+    local sidebarWidth = resolveSidebarWidth(self.Options, size)
+
+    if self.BrandCard then
+        self.BrandCard.Size = UDim2.new(1, 0, 0, compact and 66 or 76)
+    end
+
+    if self.BrandLogo then
+        self.BrandLogo.Position = compact and UDim2.fromOffset(14, 10) or UDim2.fromOffset(14, 14)
+        self.BrandLogo.Size = UDim2.fromOffset(compact and 48 or 48, compact and 46 or 48)
+    end
+
+    if self.TitleLabel then
+        self.TitleLabel.Visible = not compact
+    end
+
+    if self.SubtitleLabel then
+        self.SubtitleLabel.Visible = not compact
+    end
+
+    if self.NavigationLabel then
+        self.NavigationLabel.Visible = not compact
+    end
+
+    if self.TabHolder then
+        self.TabHolder.Position = UDim2.fromOffset(0, compact and 82 or 120)
+        self.TabHolder.Size = UDim2.new(1, 0, 1, compact and -162 or -198)
+    end
+
+    if self.Footer then
+        self.Footer.Size = UDim2.new(1, 0, 0, compact and 54 or 66)
+    end
+
+    if self.ProfileAvatar then
+        self.ProfileAvatar.Position = compact and UDim2.fromOffset(14, 8) or UDim2.fromOffset(12, 13)
+    end
+
+    if self.ProfileNameLabel then
+        self.ProfileNameLabel.Visible = not compact
+    end
+
+    if self.ProfileRoleLabel then
+        self.ProfileRoleLabel.Visible = not compact
+    end
+
+    if self.PageTitle then
+        self.PageTitle.TextSize = compact and 17 or 19
+        self.PageTitle.Position = UDim2.fromOffset(compact and 12 or 18, 24)
+        self.PageTitle.Size = UDim2.new(1, compact and -74 or -90, 0, 26)
+    end
+
+    if self.SegmentHolder then
+        self.SegmentHolder.Position = UDim2.fromOffset(compact and 12 or 18, 62)
+        self.SegmentHolder.Size = UDim2.new(1, compact and -24 or -36, 0, 34)
+    end
+
+    if self.Content then
+        self.Content.Position = UDim2.fromOffset(compact and 10 or 16, 112)
+        self.Content.Size = UDim2.new(1, compact and -20 or -32, 1, -132)
+    end
+
+    if self.SearchBox then
+        self.SearchBox.Visible = not compact and not self._minimized
+    end
+
+    for _, tab in ipairs(self.Tabs) do
+        if tab.TitleLabel then
+            tab.TitleLabel.Visible = not compact
+        end
+
+        if tab.IconObject then
+            tab.IconObject.Position = compact and UDim2.fromOffset(27, 8) or UDim2.fromOffset(14, 8)
+        end
+    end
+
+    if self.MinimizedTitle then
+        self.MinimizedTitle.Visible = self._minimized and self.MinimizedSize.X.Offset > 160
+    end
+
+    if self.Actions then
+        self.Actions.Position = UDim2.new(1, -14, 0, 14)
+    end
+
+    return sidebarWidth
+end
+
 function Window:_updateResponsiveSize(animated)
     local defaultSize, minSize, maxSize = resolveWindowSize(self.Options)
     local preferredSize = self.UserResized and self.OriginalSize or defaultSize
@@ -1345,10 +1503,10 @@ function Window:_updateResponsiveSize(animated)
     local sidebarWidth = resolveSidebarWidth(self.Options, size)
 
     self.OriginalSize = size
-    self.MinimizedSize = UDim2.fromOffset(size.X.Offset, 54)
+    self.MinimizedSize = resolveMinimizedSize(self.Options, size)
 
     if self.SizeConstraint then
-        self.SizeConstraint.MinSize = self._minimized and Vector2.new(minSize.X, 54) or minSize
+        self.SizeConstraint.MinSize = self._minimized and Vector2.new(96, 54) or minSize
         self.SizeConstraint.MaxSize = maxSize
     end
 
@@ -1369,6 +1527,8 @@ function Window:_updateResponsiveSize(animated)
         self.Topbar.Position = UDim2.fromOffset(sidebarWidth + 20, 0)
         self.Topbar.Size = UDim2.new(1, -sidebarWidth - 20, 0, 58)
     end
+
+    self:_applyResponsiveLayout(size)
 
     local targetSize = self._minimized and self.MinimizedSize or self.OriginalSize
 
@@ -1563,9 +1723,10 @@ function Window:_makeResizable()
         local height = math.clamp(startSize.Y.Offset + delta.Y, minSize.Y, maxSize.Y)
 
         self.OriginalSize = UDim2.fromOffset(width, height)
-        self.MinimizedSize = UDim2.fromOffset(width, 54)
+        self.MinimizedSize = resolveMinimizedSize(self.Options, self.OriginalSize)
         self.UserResized = true
         self.Main.Size = self.OriginalSize
+        self:_applyResponsiveLayout(self.OriginalSize)
     end))
 end
 
@@ -1574,8 +1735,9 @@ function Window:SetMinimized(value)
     self.Sidebar.Visible = not value
     self.ContentShell.Visible = not value
     self.TopbarLine.Visible = not value
-    self.SearchBox.Visible = not value
-    self.MinimizedTitle.Visible = value
+    self.SearchBox.Visible = not value and not isCompactWindowSize(self.OriginalSize)
+    self.MinimizedLogo.Visible = value
+    self.MinimizedTitle.Visible = value and self.MinimizedSize.X.Offset > 160
     if self.ResizeHandle then
         self.ResizeHandle.Visible = not value
     end
@@ -1764,6 +1926,7 @@ end
 function Tab:_build()
     local window = self.Window
     local theme = window.Theme
+    local compact = window.OriginalSize and isCompactWindowSize(window.OriginalSize) or false
 
     local button = create("TextButton", {
         AutoButtonColor = false,
@@ -1779,7 +1942,7 @@ function Tab:_build()
     local icon = makeIcon(button, self.Icon or self.Title:sub(1, 1), theme, 22)
 
     if icon then
-        icon.Position = UDim2.fromOffset(14, 8)
+        icon.Position = compact and UDim2.fromOffset(27, 8) or UDim2.fromOffset(14, 8)
     end
 
     local titleOffset = icon and 44 or 14
@@ -1787,6 +1950,7 @@ function Tab:_build()
         Position = UDim2.fromOffset(titleOffset, 0),
         Size = UDim2.new(1, -titleOffset - 10, 1, 0)
     })
+    title.Visible = not compact
 
     local page = create("ScrollingFrame", {
         Active = true,
@@ -2095,40 +2259,40 @@ end
 function Tab:Toggle(options)
     options = normalizeOptions(options)
 
-    local control = self:_base(options, self.IsGroup and 30 or (hasSupportText(options) and 58 or 44))
+    local control = self:_base(options, self.IsGroup and 32 or (hasSupportText(options) and 60 or 46))
     local frame = control.Frame
     local theme = self.Window.Theme
     local value = firstDefined(options.Default, options.Value, false)
 
     if control.Title then
-        control.Title.Size = UDim2.new(1, -58, 0, control.Desc and 20 or frame.Size.Y.Offset)
+        control.Title.Size = UDim2.new(1, -94, 0, control.Desc and 20 or frame.Size.Y.Offset)
     end
 
     if control.Desc then
-        control.Desc.Size = UDim2.new(1, -74, 0, 20)
+        control.Desc.Size = UDim2.new(1, -108, 0, 20)
     end
 
     local track = create("Frame", {
         AnchorPoint = Vector2.new(1, 0.5),
-        BackgroundColor3 = value and theme.Accent or theme.Input,
+        BackgroundColor3 = value and theme.AccentDark or theme.Input,
         BorderSizePixel = 0,
         Position = UDim2.new(1, self.IsGroup and -22 or -14, 0.5, 0),
-        Size = UDim2.fromOffset(20, 20),
+        Size = UDim2.fromOffset(44, 24),
         Parent = frame
     })
-    addCorner(track, 5)
-    addStroke(track, theme.Stroke, 0.15)
+    addCorner(track, 12)
+    addStroke(track, value and theme.Accent or theme.Stroke, value and 0.05 or 0.32)
 
     local knob = create("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = theme.Window,
+        BackgroundColor3 = value and theme.Accent or theme.Muted,
         BorderSizePixel = 0,
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(8, 8),
-        Visible = value,
+        Position = value and UDim2.new(1, -12, 0.5, 0) or UDim2.new(0, 12, 0.5, 0),
+        Size = UDim2.fromOffset(18, 18),
         Parent = track
     })
-    addCorner(knob, 4)
+    addCorner(knob, 9)
+    addStroke(knob, theme.Window, 0.4)
 
     local object = setmetatable({
         Value = value,
@@ -2141,8 +2305,16 @@ function Tab:Toggle(options)
         value = nextValue == true
         object.Value = value
 
-        tween(track, { BackgroundColor3 = value and theme.Accent or theme.Input }, DEFAULT_TWEEN)
-        knob.Visible = value
+        tween(track, { BackgroundColor3 = value and theme.AccentDark or theme.Input }, DEFAULT_TWEEN)
+        tween(knob, {
+            BackgroundColor3 = value and theme.Accent or theme.Muted,
+            Position = value and UDim2.new(1, -12, 0.5, 0) or UDim2.new(0, 12, 0.5, 0)
+        }, DEFAULT_TWEEN)
+
+        local stroke = track:FindFirstChildOfClass("UIStroke")
+        if stroke then
+            tween(stroke, { Color = value and theme.Accent or theme.Stroke, Transparency = value and 0.05 or 0.32 }, DEFAULT_TWEEN)
+        end
 
         if options.Flag then
             self.Window:SetFlag(options.Flag, value)
@@ -2157,7 +2329,7 @@ function Tab:Toggle(options)
 
     frame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            press(track, UDim2.fromOffset(20, 20))
+            press(track, UDim2.fromOffset(44, 24))
             apply(not value)
         end
     end)
