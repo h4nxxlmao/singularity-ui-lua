@@ -24,7 +24,7 @@ local Window = Singularity:CreateWindow({
     Profile = {
         Enabled = true
     },
-    Size = UDim2.fromOffset(640, 390),
+    Size = UDim2.fromOffset(680, 410),
     MinimizedWidth = 104,
     ToggleKey = Enum.KeyCode.RightShift
 })
@@ -130,6 +130,6 @@ The top search box filters the active page by group/control title, description, 
 
 ## Themes
 
-The library is designed around one theme: `Singularity`. Use `Theme = "Singularity"` or omit the theme option.
+The library is designed around one white theme: `Singularity`. Use `Theme = "Singularity"` or omit the theme option.
 
 You can still pass a custom theme table into `CreateWindow({ Theme = { ... } })` if you want to override the defaults.

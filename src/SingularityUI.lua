@@ -39,7 +39,7 @@ local LucideTried = false
 local DecalTextureCache = {}
 
 Singularity.Themes = {
-    Dark = {
+    Light = {
         Window = Color3.fromRGB(255, 255, 255),
         Topbar = Color3.fromRGB(250, 250, 250),
         Sidebar = Color3.fromRGB(248, 248, 248),
@@ -58,9 +58,11 @@ Singularity.Themes = {
     }
 }
 
-Singularity.Themes.Singularity = Singularity.Themes.Dark
-Singularity.Themes.SingularityDark = Singularity.Themes.Dark
-Singularity.Themes.Reference = Singularity.Themes.Dark
+Singularity.Themes.White = Singularity.Themes.Light
+Singularity.Themes.Singularity = Singularity.Themes.Light
+Singularity.Themes.Dark = Singularity.Themes.Light
+Singularity.Themes.SingularityDark = Singularity.Themes.Light
+Singularity.Themes.Reference = Singularity.Themes.Light
 
 Singularity.Icons = {
     alert = "rbxassetid://73186275216515",
@@ -117,7 +119,7 @@ local function copy(source)
 end
 
 local function resolveTheme(theme)
-    local base = copy(Singularity.Themes.Dark)
+    local base = copy(Singularity.Themes.Light)
 
     if typeof(theme) == "string" and Singularity.Themes[theme] then
         return copy(Singularity.Themes[theme])
@@ -836,7 +838,7 @@ function Singularity:_ensureNotificationLayer()
         return self._notificationHolder
     end
 
-    local theme = self.Theme or resolveTheme("Dark")
+    local theme = self.Theme or resolveTheme("Singularity")
 
     local gui = create("ScreenGui", {
         Name = "SingularityNotifications",
@@ -873,7 +875,7 @@ end
 function Singularity:Notify(options)
     options = normalizeOptions(options)
 
-    local theme = self._notificationTheme or self.Theme or resolveTheme("Dark")
+    local theme = self._notificationTheme or self.Theme or resolveTheme("Singularity")
     local holder = self:_ensureNotificationLayer()
     local duration = options.Duration or 2.6
 
@@ -945,7 +947,7 @@ end
 function Singularity:CreateWindow(options)
     options = normalizeOptions(options)
 
-    local theme = resolveTheme(options.Theme or self.Theme or "Dark")
+    local theme = resolveTheme(options.Theme or self.Theme or "Singularity")
     self.Theme = theme
 
     local window = setmetatable({
@@ -985,7 +987,7 @@ end
 local function resolveWindowSize(options)
     local viewport = getViewportSize()
     local margin = options.ScreenMargin or (viewport.X <= 620 and 8 or 20)
-    local requested = options.Size or UDim2.fromOffset(640, 390)
+    local requested = options.Size or UDim2.fromOffset(680, 410)
     local requestedWidth = requested.X.Offset
     local requestedHeight = requested.Y.Offset
 
@@ -999,9 +1001,9 @@ local function resolveWindowSize(options)
 
     local maxWidth = math.max(300, viewport.X - (margin * 2))
     local maxHeight = math.max(300, viewport.Y - (margin * 2))
-    local constraintMaxWidth = math.min(options.MaxWidth or 860, maxWidth)
-    local constraintMaxHeight = math.min(options.MaxHeight or 580, maxHeight)
-    local defaultMinWidth = viewport.X <= 620 and 292 or 470
+    local constraintMaxWidth = math.min(options.MaxWidth or 900, maxWidth)
+    local constraintMaxHeight = math.min(options.MaxHeight or 600, maxHeight)
+    local defaultMinWidth = viewport.X <= 620 and 292 or 540
     local defaultMinHeight = viewport.Y <= 520 and 280 or 320
     local constraintMinWidth = math.min(options.MinWidth or defaultMinWidth, constraintMaxWidth)
     local constraintMinHeight = math.min(options.MinHeight or defaultMinHeight, constraintMaxHeight)
@@ -1018,17 +1020,17 @@ local function resolveSidebarWidth(options, windowSize)
         return math.min(options.SidebarWidth, math.max(150, windowSize.X.Offset - 210))
     end
 
-    if windowSize.X.Offset <= 560 then
+    if windowSize.X.Offset <= 500 then
         return 58
-    elseif windowSize.X.Offset <= 680 then
-        return 138
+    elseif windowSize.X.Offset <= 660 then
+        return 168
     end
 
-    return 174
+    return 190
 end
 
 local function isCompactWindowSize(windowSize)
-    return windowSize.X.Offset <= 560
+    return windowSize.X.Offset <= 500
 end
 
 local function resolveMinimizedSize(options, windowSize)
@@ -1498,11 +1500,11 @@ function Window:_applyResponsiveLayout(size)
     end
 
     if self.TitleLabel then
-        self.TitleLabel.Visible = not compact
+        self.TitleLabel.Visible = not compact and sidebarWidth >= 150
     end
 
     if self.SubtitleLabel then
-        self.SubtitleLabel.Visible = not compact
+        self.SubtitleLabel.Visible = not compact and sidebarWidth >= 150
     end
 
     if self.NavigationLabel then
@@ -1552,7 +1554,7 @@ function Window:_applyResponsiveLayout(size)
 
     for _, tab in ipairs(self.Tabs) do
         if tab.TitleLabel then
-            tab.TitleLabel.Visible = not compact
+            tab.TitleLabel.Visible = not compact and sidebarWidth >= 150
         end
 
         if tab.IconObject then
@@ -3126,6 +3128,6 @@ Tab.CreateDropdown = Tab.Dropdown
 Tab.CreateKeybind = Tab.Keybind
 Tab.CreateColorpicker = Tab.Colorpicker
 
-Singularity.Theme = resolveTheme("Dark")
+Singularity.Theme = resolveTheme("Singularity")
 
 return Singularity
