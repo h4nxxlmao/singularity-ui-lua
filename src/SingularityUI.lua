@@ -2264,6 +2264,44 @@ function Window:_filterControls(controls, query, segment)
     return anyVisible
 end
 
+function Window:_fitActiveGroups()
+    local tab = self.ActiveTab
+
+    if not tab or not self.Content then
+        return
+    end
+
+    local visibleGroups = {}
+
+    for _, control in ipairs(tab.Controls or {}) do
+        if control.ChildrenControls and control.Frame then
+            if control.Frame.Visible then
+                table.insert(visibleGroups, control)
+            else
+                control.Frame.Size = UDim2.new(1, 0, 0, control.BaseHeight or 260)
+            end
+        end
+    end
+
+    if #visibleGroups ~= 1 then
+        for _, control in ipairs(visibleGroups) do
+            control.Frame.Size = UDim2.new(1, 0, 0, control.BaseHeight or 260)
+        end
+
+        return
+    end
+
+    local availableHeight = self.Content.AbsoluteSize.Y
+
+    if availableHeight <= 0 and self.OriginalSize then
+        availableHeight = math.max(260, self.OriginalSize.Y.Offset - 118)
+    end
+
+    local group = visibleGroups[1]
+    local height = math.max(group.BaseHeight or 260, availableHeight)
+    group.Frame.Size = UDim2.new(1, 0, 0, height)
+end
+
 function Window:_applySearch(query)
     query = string.lower(tostring(query or ""))
 
@@ -2272,6 +2310,7 @@ function Window:_applySearch(query)
     end
 
     self:_filterControls(self.ActiveTab.Controls, query, self.ActiveTab.ActiveSegment)
+    self:_fitActiveGroups()
     self.ActiveTab.Page.CanvasPosition = Vector2.new(0, 0)
 end
 
@@ -2481,6 +2520,7 @@ function Tab:Group(options)
         Frame = frame,
         SearchText = group.SearchText,
         Segment = segment,
+        BaseHeight = height,
         ChildrenControls = group.Controls
     })
 
