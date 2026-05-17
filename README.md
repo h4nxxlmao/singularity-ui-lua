@@ -1,7 +1,5 @@
 # Singularity UI Lua
 
-A custom Roblox Luau UI library with a tight dark Singularity style: draggable/resizable responsive window, logo brand rail, desktop search, mobile-friendly compact navigation, paginated page segments, grouped controls, slider toggles, flags, keybinds, static UI settings, config helpers, animations, and minimalist toast notifications.
-
 ## Files
 
 - `src/SingularityUI.lua` - the self-contained UI library.
