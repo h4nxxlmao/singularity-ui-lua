@@ -47,8 +47,8 @@ Singularity.Themes = {
         SurfaceHover = Color3.fromRGB(241, 243, 245),
         Input = Color3.fromRGB(246, 247, 248),
         Stroke = Color3.fromRGB(218, 223, 228),
-        Accent = Color3.fromRGB(18, 24, 31),
-        AccentDark = Color3.fromRGB(231, 235, 238),
+        Accent = Color3.fromRGB(92, 148, 255),
+        AccentDark = Color3.fromRGB(235, 242, 255),
         Text = Color3.fromRGB(21, 25, 31),
         Subtext = Color3.fromRGB(82, 92, 104),
         Muted = Color3.fromRGB(133, 143, 153),
@@ -962,7 +962,7 @@ end
 local function resolveWindowSize(options)
     local viewport = getViewportSize()
     local margin = options.ScreenMargin or (viewport.X <= 620 and 8 or 20)
-    local requested = options.Size or UDim2.fromOffset(700, 430)
+    local requested = options.Size or UDim2.fromOffset(640, 390)
     local requestedWidth = requested.X.Offset
     local requestedHeight = requested.Y.Offset
 
@@ -976,9 +976,9 @@ local function resolveWindowSize(options)
 
     local maxWidth = math.max(300, viewport.X - (margin * 2))
     local maxHeight = math.max(300, viewport.Y - (margin * 2))
-    local constraintMaxWidth = math.min(options.MaxWidth or 900, maxWidth)
-    local constraintMaxHeight = math.min(options.MaxHeight or 620, maxHeight)
-    local defaultMinWidth = viewport.X <= 620 and 300 or 500
+    local constraintMaxWidth = math.min(options.MaxWidth or 860, maxWidth)
+    local constraintMaxHeight = math.min(options.MaxHeight or 580, maxHeight)
+    local defaultMinWidth = viewport.X <= 620 and 292 or 470
     local defaultMinHeight = viewport.Y <= 520 and 280 or 320
     local constraintMinWidth = math.min(options.MinWidth or defaultMinWidth, constraintMaxWidth)
     local constraintMinHeight = math.min(options.MinHeight or defaultMinHeight, constraintMaxHeight)
@@ -996,12 +996,12 @@ local function resolveSidebarWidth(options, windowSize)
     end
 
     if windowSize.X.Offset <= 560 then
-        return 64
+        return 58
     elseif windowSize.X.Offset <= 680 then
-        return 156
+        return 138
     end
 
-    return 198
+    return 174
 end
 
 local function isCompactWindowSize(windowSize)
@@ -1011,7 +1011,7 @@ end
 local function resolveMinimizedSize(options, windowSize)
     local viewport = getViewportSize()
     local requested = options.MinimizedWidth
-    local compactWidth = requested or (viewport.X <= 620 and 104 or 184)
+    local compactWidth = requested or (viewport.X <= 620 and 96 or 164)
     local width = math.clamp(compactWidth, 88, math.max(88, windowSize.X.Offset))
 
     return UDim2.fromOffset(width, 48)
@@ -1023,10 +1023,10 @@ local function resolveScale(options)
     end
 
     if UserInputService.TouchEnabled then
-        return options.MobileScale or 0.78
+        return options.MobileScale or 0.74
     end
 
-    return 0.9
+    return 0.86
 end
 
 function Window:_build()
@@ -1074,15 +1074,15 @@ function Window:_build()
     local sidebar = create("Frame", {
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(10, 10),
-        Size = UDim2.new(0, sidebarWidth, 1, -20),
+        Position = UDim2.fromOffset(8, 8),
+        Size = UDim2.new(0, sidebarWidth, 1, -16),
         Parent = main
     })
 
     local brandCard = create("Frame", {
         BackgroundColor3 = theme.Surface,
         BorderSizePixel = 0,
-        Size = UDim2.new(1, 0, 0, 64),
+        Size = UDim2.new(1, 0, 0, 58),
         Parent = sidebar
     })
     addCorner(brandCard, 7)
@@ -1091,8 +1091,8 @@ function Window:_build()
     local logo = create("Frame", {
         BackgroundColor3 = theme.Input,
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(12, 12),
-        Size = UDim2.fromOffset(40, 40),
+        Position = UDim2.fromOffset(10, 10),
+        Size = UDim2.fromOffset(36, 36),
         Parent = brandCard
     })
     addCorner(logo, 8)
@@ -1113,7 +1113,7 @@ function Window:_build()
             ImageColor3 = Color3.new(1, 1, 1),
             Position = UDim2.fromScale(0.5, 0.5),
             ScaleType = Enum.ScaleType.Fit,
-            Size = UDim2.fromOffset(28, 28),
+            Size = UDim2.fromOffset(26, 26),
             Parent = logo
         })
 
@@ -1136,25 +1136,25 @@ function Window:_build()
     end
 
     local title = makeText(brandCard, options.Title or "Singularity", 14, theme.Text, Enum.Font.GothamMedium, {
-        Position = UDim2.fromOffset(62, 15),
-        Size = UDim2.new(1, -74, 0, 18)
+        Position = UDim2.fromOffset(54, 12),
+        Size = UDim2.new(1, -62, 0, 18)
     })
 
     local subtitle = makeText(brandCard, options.Subtitle or options.Game or "Singularity", 12, theme.Subtext, Enum.Font.Gotham, {
-        Position = UDim2.fromOffset(62, 33),
-        Size = UDim2.new(1, -74, 0, 16)
+        Position = UDim2.fromOffset(54, 30),
+        Size = UDim2.new(1, -62, 0, 16)
     })
 
     local navigationLabel = makeText(sidebar, options.NavigationTitle or "Pages", 12, theme.Muted, Enum.Font.GothamMedium, {
-        Position = UDim2.fromOffset(2, 76),
+        Position = UDim2.fromOffset(2, 68),
         Size = UDim2.new(1, -4, 0, 18)
     })
 
     local tabHolder = create("Frame", {
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(0, 100),
-        Size = UDim2.new(1, 0, 1, -168),
+        Position = UDim2.fromOffset(0, 88),
+        Size = UDim2.new(1, 0, 1, -148),
         Parent = sidebar
     })
 
@@ -1284,8 +1284,8 @@ function Window:_build()
         BackgroundColor3 = theme.Input,
         BackgroundTransparency = 0.05,
         BorderSizePixel = 0,
-        Position = UDim2.new(1, -76, 0, 12),
-        Size = UDim2.fromOffset(132, 22),
+        Position = UDim2.new(1, -70, 0, 10),
+        Size = UDim2.fromOffset(116, 20),
         Parent = main
     })
     addCorner(searchFrame, 7)
@@ -1312,11 +1312,11 @@ function Window:_build()
     })
 
     search.Focused:Connect(function()
-        tween(searchFrame, { BackgroundColor3 = theme.SurfaceHover, Size = UDim2.fromOffset(180, 24) }, DEFAULT_TWEEN)
+        tween(searchFrame, { BackgroundColor3 = theme.SurfaceHover, Size = UDim2.fromOffset(152, 20) }, DEFAULT_TWEEN)
     end)
 
     search.FocusLost:Connect(function()
-        tween(searchFrame, { BackgroundColor3 = theme.Input, Size = UDim2.fromOffset(150, 24) }, DEFAULT_TWEEN)
+        tween(searchFrame, { BackgroundColor3 = theme.Input, Size = UDim2.fromOffset(116, 20) }, DEFAULT_TWEEN)
     end)
 
     search:GetPropertyChangedSignal("Text"):Connect(function()
@@ -1466,12 +1466,12 @@ function Window:_applyResponsiveLayout(size)
     local sidebarWidth = resolveSidebarWidth(self.Options, size)
 
     if self.BrandCard then
-        self.BrandCard.Size = UDim2.new(1, 0, 0, compact and 54 or 64)
+        self.BrandCard.Size = UDim2.new(1, 0, 0, compact and 50 or 58)
     end
 
     if self.BrandLogo then
-        self.BrandLogo.Position = compact and UDim2.fromOffset(10, 8) or UDim2.fromOffset(12, 12)
-        self.BrandLogo.Size = UDim2.fromOffset(compact and 40 or 40, compact and 38 or 40)
+        self.BrandLogo.Position = compact and UDim2.fromOffset(9, 7) or UDim2.fromOffset(10, 10)
+        self.BrandLogo.Size = UDim2.fromOffset(compact and 36 or 36, compact and 36 or 36)
     end
 
     if self.TitleLabel then
@@ -1487,8 +1487,8 @@ function Window:_applyResponsiveLayout(size)
     end
 
     if self.TabHolder then
-        self.TabHolder.Position = UDim2.fromOffset(0, compact and 66 or 100)
-        self.TabHolder.Size = UDim2.new(1, 0, 1, compact and -132 or -168)
+        self.TabHolder.Position = UDim2.fromOffset(0, compact and 60 or 88)
+        self.TabHolder.Size = UDim2.new(1, 0, 1, compact and -120 or -148)
     end
 
     if self.Footer then
@@ -1566,7 +1566,7 @@ function Window:_updateResponsiveSize(animated)
     end
 
     if self.Sidebar then
-        self.Sidebar.Size = UDim2.new(0, sidebarWidth, 1, -20)
+        self.Sidebar.Size = UDim2.new(0, sidebarWidth, 1, -16)
     end
 
     if self.SidebarLine then
@@ -2440,7 +2440,7 @@ function Tab:Slider(options)
 
     local handle = create("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = theme.Text,
+        BackgroundColor3 = theme.Surface,
         BorderSizePixel = 0,
         Position = UDim2.fromScale(0, 0.5),
         Size = UDim2.fromOffset(10, 10),
