@@ -798,6 +798,7 @@ local function makeText(parent, text, size, color, font, props)
         Size = props.Size or UDim2.new(1, 0, 0, 20),
         Position = props.Position or UDim2.fromScale(0, 0),
         AnchorPoint = props.AnchorPoint or Vector2.new(0, 0),
+        ZIndex = props.ZIndex or 1,
         Parent = parent
     })
 end
@@ -819,19 +820,25 @@ local function makeIcon(parent, icon, theme, size)
         return makeAssetIcon(parent, icon, theme, size)
     end
 
-    local registeredIcon = lookupRegisteredIcon(icon)
-
-    if registeredIcon then
-        return makeAssetIcon(parent, registeredIcon, theme, size)
-    end
-
     local lucideIcon = makeLucideImage(parent, icon, theme, size)
 
     if lucideIcon then
         return lucideIcon
     end
 
-    return makeLucideIcon(parent, icon, theme, size)
+    local drawnIcon = makeLucideIcon(parent, icon, theme, size)
+
+    if drawnIcon then
+        return drawnIcon
+    end
+
+    local registeredIcon = lookupRegisteredIcon(icon)
+
+    if registeredIcon then
+        return makeAssetIcon(parent, registeredIcon, theme, size)
+    end
+
+    return nil
 end
 
 function Singularity:SetTheme(theme)
@@ -1308,7 +1315,7 @@ function Window:_build()
     create("UIListLayout", {
         FillDirection = Enum.FillDirection.Horizontal,
         HorizontalAlignment = Enum.HorizontalAlignment.Left,
-        Padding = UDim.new(0, 0),
+        Padding = UDim.new(0, 6),
         SortOrder = Enum.SortOrder.LayoutOrder,
         Parent = segmentHolder
     })
@@ -2193,45 +2200,32 @@ function Window:_renderSegments(tab)
         tab.ActiveSegment = optionTitle(segments[1])
     end
 
-    local activeIndex = 1
+    for _, segment in ipairs(segments) do
+        local label = optionTitle(segment)
+        local selected = label == tab.ActiveSegment
+        local button = create("TextButton", {
+            AutoButtonColor = false,
+            BackgroundColor3 = selected and self.Theme.SurfaceHover or self.Theme.Surface,
+            BackgroundTransparency = selected and 0 or 0.35,
+            BorderSizePixel = 0,
+            Font = selected and Enum.Font.GothamBold or Enum.Font.GothamMedium,
+            Text = label,
+            TextColor3 = selected and self.Theme.Text or self.Theme.Subtext,
+            TextSize = 12,
+            Size = UDim2.fromOffset(math.max(76, (#label * 7) + 28), 28),
+            Parent = self.SegmentHolder
+        })
+        addCorner(button, 7)
+        addStroke(button, self.Theme.Stroke, selected and 0.55 or 0.8)
 
-    for index, segment in ipairs(segments) do
-        if optionTitle(segment) == tab.ActiveSegment then
-            activeIndex = index
-            break
-        end
+        button.MouseButton1Click:Connect(function()
+            press(button, button.Size)
+            tab.ActiveSegment = label
+            self:_renderSegments(tab)
+            self:_applySearch(self.SearchInput and self.SearchInput.Text or "")
+            safeCall(tab.SegmentCallback, tab.ActiveSegment)
+        end)
     end
-
-    local label = optionTitle(segments[activeIndex])
-    local button = create("TextButton", {
-        AutoButtonColor = false,
-        BackgroundColor3 = self.Theme.SurfaceHover,
-        BackgroundTransparency = 0,
-        BorderSizePixel = 0,
-        Font = Enum.Font.GothamBold,
-        Text = ("%s  %d/%d"):format(label, activeIndex, #segments),
-        TextColor3 = self.Theme.Text,
-        TextSize = 12,
-        Size = UDim2.fromOffset(math.max(96, (#label * 7) + 46), 28),
-        Parent = self.SegmentHolder
-    })
-    addCorner(button, 7)
-    addStroke(button, self.Theme.Stroke, 0.8)
-
-    button.MouseButton1Click:Connect(function()
-        press(button, button.Size)
-
-        activeIndex += 1
-
-        if activeIndex > #segments then
-            activeIndex = 1
-        end
-
-        tab.ActiveSegment = optionTitle(segments[activeIndex])
-        self:_renderSegments(tab)
-        self:_applySearch(self.SearchInput and self.SearchInput.Text or "")
-        safeCall(tab.SegmentCallback, tab.ActiveSegment)
-    end)
 end
 
 function Window:_filterControls(controls, query, segment)
@@ -2413,6 +2407,7 @@ function Tab:Group(options)
     local theme = self.Window.Theme
     local height = options.Height or 260
     local segment = options.Segment or self.Segment or self.ActiveSegment
+    local hasIcon = options.Icon ~= false and options.Icon ~= nil
     local frame = create("Frame", {
         BackgroundColor3 = theme.Window,
         BorderSizePixel = 0,
@@ -2423,12 +2418,17 @@ function Tab:Group(options)
     addCorner(frame, 7)
     addStroke(frame, theme.Stroke, 0.34, 1)
 
-    local icon = makeIcon(frame, options.Icon or "A", theme, 17)
-    icon.Position = UDim2.fromOffset(12, 10)
+    if hasIcon then
+        local icon = makeIcon(frame, options.Icon, theme, 16)
+
+        if icon then
+            icon.Position = UDim2.fromOffset(14, 9)
+        end
+    end
 
     makeText(frame, options.Title or options.Name or "Group", 12, theme.Subtext, Enum.Font.GothamMedium, {
-        Position = UDim2.fromOffset(36, 8),
-        Size = UDim2.new(1, -48, 0, 24)
+        Position = UDim2.fromOffset(hasIcon and 40 or 16, 8),
+        Size = UDim2.new(1, hasIcon and -52 or -28, 0, 24)
     })
 
     local content = create("ScrollingFrame", {
@@ -2995,6 +2995,7 @@ function Tab:Dropdown(options)
     local frame = control.Frame
     local selected = multi and {} or firstDefined(options.Default, options.Value)
     local expanded = false
+    frame.ClipsDescendants = false
 
     if multi then
         local default = firstDefined(options.Default, options.Value)
@@ -3029,6 +3030,7 @@ function Tab:Dropdown(options)
         Position = self.IsGroup and UDim2.new(1, -16, 0.5, 0) or UDim2.new(1, -12, 0, 10),
         Size = UDim2.fromOffset(options.Width or (self.IsGroup and 104 or 152), self.IsGroup and 24 or 26),
         Text = "",
+        ZIndex = 8,
         Parent = frame
     })
     addCorner(selectButton, 7)
@@ -3036,14 +3038,16 @@ function Tab:Dropdown(options)
 
     local selectText = makeText(selectButton, options.Placeholder or "Select", 11, theme.Subtext, Enum.Font.GothamMedium, {
         Position = UDim2.fromOffset(8, 0),
-        Size = UDim2.new(1, -30, 1, 0)
+        Size = UDim2.new(1, -30, 1, 0),
+        ZIndex = 9
     })
 
     local chevron = makeText(selectButton, "+", 12, theme.Subtext, Enum.Font.GothamBold, {
         AnchorPoint = Vector2.new(1, 0.5),
         Position = UDim2.new(1, -8, 0.5, 0),
         Size = UDim2.fromOffset(12, 12),
-        TextXAlignment = Enum.TextXAlignment.Center
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 9
     })
 
     local list = create("ScrollingFrame", {
@@ -3057,6 +3061,7 @@ function Tab:Dropdown(options)
         ScrollBarThickness = 3,
         Size = UDim2.new(1, self.IsGroup and -32 or -24, 0, math.min(#values, maxVisible) * (optionHeight + 3)),
         Visible = false,
+        ZIndex = 20,
         Parent = frame
     })
     addCorner(list, 8)
@@ -3153,6 +3158,7 @@ function Tab:Dropdown(options)
                 TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Size = UDim2.new(1, 0, 0, optionHeight),
+                ZIndex = 21,
                 Parent = list
             })
             addCorner(item, 6)
@@ -3165,7 +3171,7 @@ function Tab:Dropdown(options)
                 tween(item, { BackgroundColor3 = theme.Surface }, DEFAULT_TWEEN)
             end)
 
-            item.MouseButton1Click:Connect(function()
+            item.Activated:Connect(function()
                 if multi then
                     selected[value] = not selected[value]
                     apply(selected)
@@ -3193,7 +3199,7 @@ function Tab:Dropdown(options)
 
     self.Window:_registerFlagControl(options.Flag, object)
 
-    selectButton.MouseButton1Click:Connect(function()
+    selectButton.Activated:Connect(function()
         press(selectButton, selectButton.Size)
         setExpanded(not expanded)
     end)
